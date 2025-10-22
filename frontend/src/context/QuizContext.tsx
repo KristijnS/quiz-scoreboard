@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
-import { useParams } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { Quiz } from '../types';
 import { quizApi } from '../services/api';
 
@@ -13,7 +13,11 @@ interface QuizContextType {
 const QuizContext = createContext<QuizContextType | undefined>(undefined);
 
 export function QuizProvider({ children }: { children: ReactNode }) {
-    const { id } = useParams();
+    const location = useLocation();
+    // Extract quiz ID from the current location path
+    const match = location.pathname.match(/\/quiz\/(\d+)/);
+    const id = match ? match[1] : null;
+    
     const [quiz, setQuiz] = useState<Quiz | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<Error | null>(null);
