@@ -1,0 +1,23 @@
+{
+  "name": "quiz-scoreboard",
+  "version": "1.0.0",
+  "description": "Quiz Scoreboard Application",
+  "scripts": {
+    "install:all": "npm install && cd frontend && npm install && cd ../backend && npm install && cd ../electron && npm install",
+    "dev:frontend": "npm --prefix ./frontend run dev",
+    "dev:backend": "npm --prefix ./backend run dev",
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "electron:dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\" \"wait-on http://localhost:3000 http://localhost:5173 && npm --prefix ./electron start\"",
+    "cleanup": "./cleanup.sh",
+    "build": "npm --prefix ./backend run build && npm --prefix ./frontend run build",
+  "build:electron:mac": "npm run build && npm run generate:icons && npm --prefix ./electron run build:mac",
+  "build:electron:win": "npm run build && npm run generate:icons && npm --prefix ./electron run build:win",
+  "build:electron:all": "npm run build && npm run generate:icons && npm --prefix ./electron run build:all",
+    "start": "npm --prefix ./backend start",
+    "generate:icons": "sh ./electron/generate-icons.sh"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "wait-on": "^7.2.0"
+  }
+}
