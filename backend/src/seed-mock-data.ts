@@ -77,6 +77,7 @@ async function seedMockData() {
         for (let i = 0; i < 40; i++) {
             const team = new Team();
             team.name = funkyTeamNames[i];
+            team.nr = i + 1; // Set team number
             await teamRepo.save(team);
             teams.push(team);
         }
