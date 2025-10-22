@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, useCallback } from 'react';
+import { useEffect, useState, useMemo, useCallback, memo } from 'react';
 import { useParams } from 'react-router-dom';
 import {
     Container,
@@ -15,7 +15,7 @@ import {
 import { Quiz } from '../types';
 import { quizApi } from '../services/api';
 
-export default function Scoreboard() {
+function Scoreboard() {
     const { id } = useParams();
     const [quiz, setQuiz] = useState<Quiz | null>(null);
     const [sortColumn, setSortColumn] = useState<string>('total');
@@ -296,3 +296,5 @@ export default function Scoreboard() {
         </Container>
     );
 }
+
+export default memo(Scoreboard);

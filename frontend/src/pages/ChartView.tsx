@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, useCallback } from 'react';
+import { useEffect, useState, useMemo, useCallback, memo } from 'react';
 import { useParams } from 'react-router-dom';
 import { Container, Typography, Box, Paper, useTheme } from '@mui/material';
 import {
@@ -31,7 +31,7 @@ ChartJS.register(
     Legend
 );
 
-    export default function ChartView() {
+    function ChartView() {
         const { id } = useParams();
         const theme = useTheme();
         const [quiz, setQuiz] = useState<Quiz | null>(null);
@@ -325,3 +325,5 @@ ChartJS.register(
             </Container>
         );
 }
+
+export default memo(ChartView);

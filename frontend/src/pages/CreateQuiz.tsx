@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useState, memo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button, TextField, Container, Typography, Box, Paper } from '@mui/material';
 import { quizApi } from '../services/api';
 
-export default function CreateQuiz() {
+function CreateQuiz() {
     const [quizName, setQuizName] = useState('');
     const navigate = useNavigate();
 
@@ -49,3 +49,5 @@ export default function CreateQuiz() {
         </Container>
     );
 }
+
+export default memo(CreateQuiz);

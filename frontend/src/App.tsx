@@ -2,16 +2,18 @@
 import { AppBar, Toolbar, Typography, Switch, Box, Button, Menu, MenuItem, IconButton } from '@mui/material';
 import { Settings as SettingsIcon } from '@mui/icons-material';
 import { Routes, Route, useLocation, useNavigate } from 'react-router-dom';
-import { useState, MouseEvent, useEffect, useCallback } from 'react';
-import StartQuiz from './pages/StartQuiz';
-import CreateQuiz from './pages/CreateQuiz';
-import LoadQuiz from './pages/LoadQuiz';
-import Scoreboard from './pages/Scoreboard';
-import QuizManagement from './pages/QuizManagement';
-import AddScore from './pages/AddScore';
-import ChartView from './pages/ChartView';
+import { useState, MouseEvent, useEffect, useCallback, lazy, Suspense, memo } from 'react';
 import { quizApi } from './services/api';
 import { Quiz } from './types';
+
+// Lazy load route components for faster initial load and navigation
+const StartQuiz = lazy(() => import('./pages/StartQuiz'));
+const CreateQuiz = lazy(() => import('./pages/CreateQuiz'));
+const LoadQuiz = lazy(() => import('./pages/LoadQuiz'));
+const Scoreboard = lazy(() => import('./pages/Scoreboard'));
+const QuizManagement = lazy(() => import('./pages/QuizManagement'));
+const AddScore = lazy(() => import('./pages/AddScore'));
+const ChartView = lazy(() => import('./pages/ChartView'));
 
 interface AppProps {
   darkMode: boolean;
@@ -275,17 +277,23 @@ function App({ darkMode, setDarkMode }: AppProps) {
           </Menu>
         </Toolbar>
       </AppBar>
-      <Routes>
-        <Route path="/" element={<StartQuiz />} />
-        <Route path="/create" element={<CreateQuiz />} />
-        <Route path="/load" element={<LoadQuiz />} />
-        <Route path="/quiz/:id" element={<Scoreboard />} />
-        <Route path="/quiz/:id/manage" element={<QuizManagement />} />
-        <Route path="/quiz/:id/score" element={<AddScore />} />
-        <Route path="/quiz/:id/chart" element={<ChartView />} />
-      </Routes>
+      <Suspense fallback={
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '80vh' }}>
+          <Typography variant="h6" color="text.secondary">Loading...</Typography>
+        </Box>
+      }>
+        <Routes>
+          <Route path="/" element={<StartQuiz />} />
+          <Route path="/create" element={<CreateQuiz />} />
+          <Route path="/load" element={<LoadQuiz />} />
+          <Route path="/quiz/:id" element={<Scoreboard />} />
+          <Route path="/quiz/:id/manage" element={<QuizManagement />} />
+          <Route path="/quiz/:id/score" element={<AddScore />} />
+          <Route path="/quiz/:id/chart" element={<ChartView />} />
+        </Routes>
+      </Suspense>
     </Box>
   );
 }
 
-export default App;
+export default memo(App);

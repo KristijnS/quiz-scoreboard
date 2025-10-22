@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, memo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     Container,
@@ -22,7 +22,7 @@ import { Delete as DeleteIcon } from '@mui/icons-material';
 import { Quiz } from '../types';
 import { quizApi } from '../services/api';
 
-export default function LoadQuiz() {
+function LoadQuiz() {
     const [quizzes, setQuizzes] = useState<Quiz[]>([]);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [quizToDelete, setQuizToDelete] = useState<Quiz | null>(null);
@@ -141,3 +141,5 @@ export default function LoadQuiz() {
         </Container>
     );
 }
+
+export default memo(LoadQuiz);

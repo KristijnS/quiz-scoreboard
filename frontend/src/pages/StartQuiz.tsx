@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, memo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
     Button, 
@@ -18,7 +18,7 @@ import {
 import { Quiz } from '../types';
 import { quizApi } from '../services/api';
 
-export default function StartQuiz() {
+function StartQuiz() {
     const [quizName, setQuizName] = useState('');
     const [quizzes, setQuizzes] = useState<Quiz[]>([]);
     const navigate = useNavigate();
@@ -126,3 +126,5 @@ export default function StartQuiz() {
         </Container>
     );
 }
+
+export default memo(StartQuiz);

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo, useCallback, memo } from 'react';
 import { useParams } from 'react-router-dom';
 import {
     Container,
@@ -27,7 +27,7 @@ import { Add as AddIcon, Delete as DeleteIcon, ArrowUpward, ArrowDownward, Edit 
 import { Quiz, CreateRoundData } from '../types';
 import { quizApi, teamApi, roundApi } from '../services/api';
 
-export default function QuizManagement() {
+function QuizManagement() {
     const { id } = useParams();
     const theme = useTheme();
     const [quiz, setQuiz] = useState<Quiz | null>(null);
@@ -57,24 +57,37 @@ export default function QuizManagement() {
 
     useEffect(() => {
         if (id) loadQuiz();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [id]);
 
-    const loadQuiz = async () => {
+    const loadQuiz = useCallback(async () => {
         if (!id) return;
-        const data = await quizApi.get(parseInt(id));
+        const data = await quizApi.get(parseInt(id, 10));
         setQuiz(data);
         setScaleConversionEnabled(data.scaleConversionEnabled || false);
         setStandardScale(data.standardScale?.toString() || '100');
         setGradientEnabled(data.gradientEnabled !== undefined ? data.gradientEnabled : true);
-    };
+    }, [id]);
 
     const [teamError, setTeamError] = useState<string | null>(null);
 
-    const handleAddTeam = async () => {
+    // Memoize sorted teams to avoid sorting on every render
+    const sortedTeams = useMemo(() => {
+        if (!quiz) return [];
+        return [...quiz.teamQuizzes].sort((a, b) => a.team.nr - b.team.nr);
+    }, [quiz]);
+
+    // Memoize sorted rounds to avoid sorting on every render
+    const sortedRounds = useMemo(() => {
+        if (!quiz) return [];
+        return [...quiz.rounds].sort((a, b) => a.nr - b.nr);
+    }, [quiz]);
+
+    const handleAddTeam = useCallback(async () => {
         if (!id || !newTeamName.trim()) return;
         try {
             setTeamError(null);
-            await teamApi.addToQuiz(parseInt(id), newTeamName);
+            await teamApi.addToQuiz(parseInt(id, 10), newTeamName);
             setNewTeamName('');
             loadQuiz();
         } catch (error: any) {
@@ -84,9 +97,9 @@ export default function QuizManagement() {
                 setTeamError('Failed to add team');
             }
         }
-    };
+    }, [id, newTeamName, loadQuiz]);
 
-    const handleDeleteTeamClick = (teamId: number, teamName: string) => {
+    const handleDeleteTeamClick = useCallback((teamId: number, teamName: string) => {
         if (!quiz) return;
         const teamQuiz = quiz.teamQuizzes.find(tq => tq.team.id === teamId);
         const hasScores = teamQuiz ? teamQuiz.scores.length > 0 : false;
@@ -98,28 +111,28 @@ export default function QuizManagement() {
             dependencyCount: teamQuiz?.scores.length || 0
         });
         setDeleteDialogOpen(true);
-    };
+    }, [quiz]);
 
-    const handleDeleteTeam = async (teamId: number) => {
+    const handleDeleteTeam = useCallback(async (teamId: number) => {
         if (!id) return;
-        await teamApi.removeFromQuiz(parseInt(id), teamId);
+        await teamApi.removeFromQuiz(parseInt(id, 10), teamId);
         loadQuiz();
-    };
+    }, [id, loadQuiz]);
 
     const [roundError, setRoundError] = useState<string | null>(null);
 
-    const handleAddRound = async () => {
+    const handleAddRound = useCallback(async () => {
         if (!id || !newRoundTitle.trim()) return;
         try {
             setRoundError(null);
-            const maxScore = parseInt(newRoundMaxScore) || 10;
+            const maxScore = parseInt(newRoundMaxScore, 10) || 10;
             const nextNr = quiz?.rounds.length ? Math.max(...quiz.rounds.map(r => r.nr)) + 1 : 1;
             
             await roundApi.create({
                 title: newRoundTitle,
                 nr: nextNr,
                 maxScore,
-                quizId: parseInt(id)
+                quizId: parseInt(id, 10)
             } as CreateRoundData);
             
             setNewRoundTitle('');
@@ -132,9 +145,9 @@ export default function QuizManagement() {
                 setRoundError('Failed to add round');
             }
         }
-    };
+    }, [id, newRoundTitle, newRoundMaxScore, quiz, loadQuiz]);
 
-    const handleDeleteRoundClick = (roundId: number, roundTitle: string) => {
+    const handleDeleteRoundClick = useCallback((roundId: number, roundTitle: string) => {
         if (!quiz) return;
         // Count scores for this round across all teams
         let scoreCount = 0;
@@ -152,17 +165,17 @@ export default function QuizManagement() {
             dependencyCount: scoreCount
         });
         setDeleteDialogOpen(true);
-    };
+    }, [quiz]);
 
-    const handleDeleteRound = async (roundId: number) => {
+    const handleDeleteRound = useCallback(async (roundId: number) => {
         await roundApi.delete(roundId);
         loadQuiz();
-    };
+    }, [loadQuiz]);
 
-    const handleMoveRound = async (roundId: number, direction: 'up' | 'down') => {
+    const handleMoveRound = useCallback(async (roundId: number, direction: 'up' | 'down') => {
         if (!quiz) return;
         
-        const rounds = [...quiz.rounds].sort((a, b) => a.nr - b.nr);
+        const rounds = sortedRounds;
         const index = rounds.findIndex(r => r.id === roundId);
         if (index === -1) return;
         
@@ -181,14 +194,12 @@ export default function QuizManagement() {
         }
         
         loadQuiz();
-    };
+    }, [quiz, sortedRounds, loadQuiz]);
 
-    const handleMoveTeam = async (teamId: number, direction: 'up' | 'down') => {
+    const handleMoveTeam = useCallback(async (teamId: number, direction: 'up' | 'down') => {
         if (!quiz) return;
         
-        const teams = quiz.teamQuizzes
-            .sort((a, b) => a.team.nr - b.team.nr)
-            .map(tq => tq.team);
+        const teams = sortedTeams.map(tq => tq.team);
             
         const index = teams.findIndex(t => t.id === teamId);
         if (index === -1) return;
@@ -208,25 +219,25 @@ export default function QuizManagement() {
         }
         
         loadQuiz();
-    };
+    }, [quiz, sortedTeams, id, loadQuiz]);
 
-    const handleStartEditTeam = (teamId: number, currentName: string) => {
+    const handleStartEditTeam = useCallback((teamId: number, currentName: string) => {
         setEditingTeamId(teamId);
         setEditTeamName(currentName);
         setEditTeamError(null);
-    };
+    }, []);
 
-    const handleCancelEditTeam = () => {
+    const handleCancelEditTeam = useCallback(() => {
         setEditingTeamId(null);
         setEditTeamName('');
         setEditTeamError(null);
-    };
+    }, []);
 
-    const handleSaveTeam = async (teamId: number) => {
+    const handleSaveTeam = useCallback(async (teamId: number) => {
         if (!id || !editTeamName.trim()) return;
         try {
             setEditTeamError(null);
-            await teamApi.update(teamId, editTeamName, parseInt(id));
+            await teamApi.update(teamId, editTeamName, parseInt(id, 10));
             setEditingTeamId(null);
             setEditTeamName('');
             loadQuiz();
@@ -237,27 +248,27 @@ export default function QuizManagement() {
                 setEditTeamError('Failed to update team');
             }
         }
-    };
+    }, [id, editTeamName, loadQuiz]);
 
-    const handleStartEditRound = (roundId: number, currentTitle: string, currentMaxScore: number) => {
+    const handleStartEditRound = useCallback((roundId: number, currentTitle: string, currentMaxScore: number) => {
         setEditingRoundId(roundId);
         setEditRoundTitle(currentTitle);
         setEditRoundMaxScore(currentMaxScore.toString());
         setEditRoundError(null);
-    };
+    }, []);
 
-    const handleCancelEditRound = () => {
+    const handleCancelEditRound = useCallback(() => {
         setEditingRoundId(null);
         setEditRoundTitle('');
         setEditRoundMaxScore('');
         setEditRoundError(null);
-    };
+    }, []);
 
-    const handleSaveRound = async (roundId: number) => {
+    const handleSaveRound = useCallback(async (roundId: number) => {
         if (!editRoundTitle.trim()) return;
         try {
             setEditRoundError(null);
-            const maxScore = parseInt(editRoundMaxScore) || 10;
+            const maxScore = parseInt(editRoundMaxScore, 10) || 10;
             await roundApi.update(roundId, { title: editRoundTitle, maxScore });
             setEditingRoundId(null);
             setEditRoundTitle('');
@@ -270,56 +281,61 @@ export default function QuizManagement() {
                 setEditRoundError('Failed to update round');
             }
         }
-    };
+    }, [editRoundTitle, editRoundMaxScore, loadQuiz]);
 
-    const handleScaleConversionChange = async (enabled: boolean) => {
+    const handleScaleConversionChange = useCallback(async (enabled: boolean) => {
         if (!id) return;
         setScaleConversionEnabled(enabled);
-        await quizApi.update(parseInt(id), { scaleConversionEnabled: enabled });
+        await quizApi.update(parseInt(id, 10), { scaleConversionEnabled: enabled });
         loadQuiz();
-    };
+    }, [id, loadQuiz]);
 
-    const handleStandardScaleChange = async (value: string) => {
+    const handleStandardScaleChange = useCallback(async (value: string) => {
         if (!id) return;
         setStandardScale(value);
         const numValue = parseFloat(value);
         if (!isNaN(numValue) && numValue > 0) {
-            await quizApi.update(parseInt(id), { standardScale: numValue });
+            await quizApi.update(parseInt(id, 10), { standardScale: numValue });
             loadQuiz();
         }
-    };
+    }, [id, loadQuiz]);
 
-    const handleToggleExcludeFromScale = async (roundId: number, currentValue: boolean) => {
+    const handleToggleExcludeFromScale = useCallback(async (roundId: number, currentValue: boolean) => {
+        const round = quiz?.rounds.find(r => r.id === roundId);
+        if (!round) return;
+        
         await roundApi.update(roundId, { 
-            title: quiz!.rounds.find(r => r.id === roundId)!.title,
-            maxScore: quiz!.rounds.find(r => r.id === roundId)!.maxScore,
+            title: round.title,
+            maxScore: round.maxScore,
             excludeFromScale: !currentValue 
         });
         loadQuiz();
-    };
+    }, [quiz, loadQuiz]);
 
-    const handleGradientChange = async (enabled: boolean) => {
+    const handleGradientChange = useCallback(async (enabled: boolean) => {
         if (!id) return;
         setGradientEnabled(enabled);
-        await quizApi.update(parseInt(id), { gradientEnabled: enabled });
+        await quizApi.update(parseInt(id, 10), { gradientEnabled: enabled });
         loadQuiz();
-    };
+    }, [id, loadQuiz]);
 
-    const handleDeleteConfirm = async () => {
+    const handleCloseDialog = useCallback(() => {
+        setDeleteDialogOpen(false);
+        setItemToDelete(null);
+    }, []);
+
+    const handleConfirmDelete = useCallback(async () => {
         if (!itemToDelete) return;
+        
         if (itemToDelete.type === 'team') {
             await handleDeleteTeam(itemToDelete.id);
         } else {
             await handleDeleteRound(itemToDelete.id);
         }
+        
         setDeleteDialogOpen(false);
         setItemToDelete(null);
-    };
-
-    const handleDeleteCancel = () => {
-        setDeleteDialogOpen(false);
-        setItemToDelete(null);
-    };
+    }, [itemToDelete, handleDeleteTeam, handleDeleteRound]);
 
     if (!quiz) return null;
 
@@ -378,8 +394,7 @@ export default function QuizManagement() {
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
-                                    {quiz.teamQuizzes
-                                        .sort((a, b) => a.team.nr - b.team.nr)
+                                    {sortedTeams
                                         .map((teamQuiz, index, sortedTeams) => (
                                             <TableRow key={teamQuiz.id}>
                                                 <TableCell width="10%">{teamQuiz.team.nr}</TableCell>
@@ -564,8 +579,7 @@ export default function QuizManagement() {
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
-                                    {quiz.rounds
-                                        .sort((a, b) => a.nr - b.nr)
+                                    {sortedRounds
                                         .map((round, index, sortedRounds) => (
                                             <TableRow key={round.id}>
                                                 <TableCell>{round.nr}</TableCell>
@@ -775,7 +789,7 @@ export default function QuizManagement() {
             {/* Delete Confirmation Dialog */}
             <Dialog
                 open={deleteDialogOpen}
-                onClose={handleDeleteCancel}
+                onClose={handleCloseDialog}
             >
                 <DialogTitle>Confirm Delete</DialogTitle>
                 <DialogContent>
@@ -795,8 +809,8 @@ export default function QuizManagement() {
                     </DialogContentText>
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={handleDeleteCancel}>Cancel</Button>
-                    <Button onClick={handleDeleteConfirm} color="error" variant="contained">
+                    <Button onClick={handleCloseDialog}>Cancel</Button>
+                    <Button onClick={handleConfirmDelete} color="error" variant="contained">
                         Delete
                     </Button>
                 </DialogActions>
@@ -804,3 +818,5 @@ export default function QuizManagement() {
         </Container>
     );
 }
+
+export default memo(QuizManagement);
