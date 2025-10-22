@@ -73,7 +73,7 @@ function QuizManagement() {
     // Memoize sorted teams to avoid sorting on every render
     const sortedTeams = useMemo(() => {
         if (!quiz) return [];
-        return [...quiz.teamQuizzes].sort((a, b) => a.team.nr - b.team.nr);
+        return [...quiz.teamQuizzes].sort((a, b) => a.nr - b.nr);
     }, [quiz]);
 
     // Memoize sorted rounds to avoid sorting on every render
@@ -198,23 +198,21 @@ function QuizManagement() {
     const handleMoveTeam = useCallback(async (teamId: number, direction: 'up' | 'down') => {
         if (!quiz) return;
         
-        const teams = sortedTeams.map(tq => tq.team);
-            
-        const index = teams.findIndex(t => t.id === teamId);
+        const index = sortedTeams.findIndex(tq => tq.team.id === teamId);
         if (index === -1) return;
         
         if (direction === 'up' && index > 0) {
-            const temp = teams[index].nr;
-            teams[index].nr = teams[index - 1].nr;
-            teams[index - 1].nr = temp;
-            await teamApi.updateOrder(teams[index].id, teams[index].nr, id!);
-            await teamApi.updateOrder(teams[index - 1].id, teams[index - 1].nr, id!);
-        } else if (direction === 'down' && index < teams.length - 1) {
-            const temp = teams[index].nr;
-            teams[index].nr = teams[index + 1].nr;
-            teams[index + 1].nr = temp;
-            await teamApi.updateOrder(teams[index].id, teams[index].nr, id!);
-            await teamApi.updateOrder(teams[index + 1].id, teams[index + 1].nr, id!);
+            const temp = sortedTeams[index].nr;
+            sortedTeams[index].nr = sortedTeams[index - 1].nr;
+            sortedTeams[index - 1].nr = temp;
+            await teamApi.updateOrder(sortedTeams[index].team.id, sortedTeams[index].nr, id!);
+            await teamApi.updateOrder(sortedTeams[index - 1].team.id, sortedTeams[index - 1].nr, id!);
+        } else if (direction === 'down' && index < sortedTeams.length - 1) {
+            const temp = sortedTeams[index].nr;
+            sortedTeams[index].nr = sortedTeams[index + 1].nr;
+            sortedTeams[index + 1].nr = temp;
+            await teamApi.updateOrder(sortedTeams[index].team.id, sortedTeams[index].nr, id!);
+            await teamApi.updateOrder(sortedTeams[index + 1].team.id, sortedTeams[index + 1].nr, id!);
         }
         
         loadQuiz();
@@ -396,7 +394,7 @@ function QuizManagement() {
                                     {sortedTeams
                                         .map((teamQuiz, index, sortedTeams) => (
                                             <TableRow key={teamQuiz.id}>
-                                                <TableCell width="10%">{teamQuiz.team.nr}</TableCell>
+                                                <TableCell width="10%">{teamQuiz.nr}</TableCell>
                                                 <TableCell width="70%">
                                                     {editingTeamId === teamQuiz.team.id ? (
                                                         <TextField

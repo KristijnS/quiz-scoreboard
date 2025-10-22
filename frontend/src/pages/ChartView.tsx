@@ -138,7 +138,7 @@ ChartJS.register(
 
         // Memoize labels
         const labels = useMemo(() => {
-            return sortedTeams.map((item) => wrapLabel(`${item.teamQuiz.team.nr}. ${item.teamQuiz.team.name}`));
+            return sortedTeams.map((item) => wrapLabel(`${item.teamQuiz.nr}. ${item.teamQuiz.team.name}`));
         }, [sortedTeams, wrapLabel]);
 
         // Memoize team scores
@@ -231,7 +231,7 @@ ChartJS.register(
                     callbacks: {
                         title: (context: any) => {
                             const index = context[0].dataIndex;
-                            return `${sortedTeams[index].teamQuiz.team.nr}. ${sortedTeams[index].teamQuiz.team.name}`;
+                            return `${sortedTeams[index].teamQuiz.nr}. ${sortedTeams[index].teamQuiz.team.name}`;
                         }
                     }
                 }

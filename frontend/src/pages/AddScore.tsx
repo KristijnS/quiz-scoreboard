@@ -108,7 +108,7 @@ function AddScore() {
     // Memoize sorted teams to avoid sorting on every render
     const sortedTeams = useMemo(() => {
         if (!quiz) return [];
-        return [...quiz.teamQuizzes].sort((a, b) => a.team.nr - b.team.nr);
+        return [...quiz.teamQuizzes].sort((a, b) => a.nr - b.nr);
     }, [quiz]);
 
     // Memoize min/max round numbers
@@ -187,7 +187,7 @@ function AddScore() {
                             <TableBody>
                                 {sortedTeams.map((teamQuiz) => (
                                     <TableRow key={teamQuiz.id}>
-                                        <TableCell>{teamQuiz.team.nr}</TableCell>
+                                        <TableCell>{teamQuiz.nr}</TableCell>
                                         <TableCell>{teamQuiz.team.name}</TableCell>
                                         <TableCell align="right">
                                             <TextField

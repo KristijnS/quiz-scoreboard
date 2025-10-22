@@ -77,7 +77,6 @@ async function seedMockData() {
         for (let i = 0; i < 40; i++) {
             const team = new Team();
             team.name = funkyTeamNames[i];
-            team.nr = i + 1; // Set team number
             await teamRepo.save(team);
             teams.push(team);
         }
@@ -86,10 +85,11 @@ async function seedMockData() {
         // Create TeamQuiz relationships
         console.log('\n🔗 Linking teams to quiz...');
         const teamQuizzes: TeamQuiz[] = [];
-        for (const team of teams) {
+        for (let i = 0; i < teams.length; i++) {
             const teamQuiz = new TeamQuiz();
-            teamQuiz.team = team;
+            teamQuiz.team = teams[i];
             teamQuiz.quiz = quiz;
+            teamQuiz.nr = i + 1; // Set team number within this quiz
             await teamQuizRepo.save(teamQuiz);
             teamQuizzes.push(teamQuiz);
         }

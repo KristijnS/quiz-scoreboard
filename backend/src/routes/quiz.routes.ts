@@ -38,7 +38,7 @@ router.get('/:id', async (req, res) => {
             .leftJoinAndSelect('scores.round', 'round')
             .where('quiz.id = :id', { id })
             .orderBy('rounds.nr', 'ASC')
-            .addOrderBy('team.nr', 'ASC')
+            .addOrderBy('teamQuizzes.nr', 'ASC')
             .getOne();
         
         if (!quiz) {

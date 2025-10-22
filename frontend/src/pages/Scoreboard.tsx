@@ -147,8 +147,8 @@ function Scoreboard() {
                     bValue = teamRanksMap.get(b.id) || 0;
                     break;
                 case 'nr':
-                    aValue = a.team.nr;
-                    bValue = b.team.nr;
+                    aValue = a.nr;
+                    bValue = b.nr;
                     break;
                 case 'team':
                     aValue = a.team.name.toLowerCase();
@@ -267,7 +267,7 @@ function Scoreboard() {
                                     <TableCell sx={{ bgcolor: bgColor, p: 1 }}>
                                         <strong>{rank}</strong>
                                     </TableCell>
-                                    <TableCell sx={{ p: 1 }}>{teamQuiz.team.nr}</TableCell>
+                                    <TableCell sx={{ p: 1 }}>{teamQuiz.nr}</TableCell>
                                     <TableCell sx={{ p: 1 }}>
                                         <Typography sx={{ 
                                             fontWeight: 'bold',

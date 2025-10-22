@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany, Index } from "typeorm";
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from "typeorm";
 import { TeamQuiz } from "./TeamQuiz";
 
 @Entity()
@@ -8,10 +8,6 @@ export class Team {
 
     @Column()
     name!: string;
-
-    @Column({ default: 1 })
-    @Index() // Index on nr for sorting teams
-    nr!: number;
 
     @OneToMany(() => TeamQuiz, teamQuiz => teamQuiz.team)
     teamQuizzes!: TeamQuiz[];

@@ -45,21 +45,17 @@ router.post('/quiz/:quizId', async (req, res) => {
     }
 
     // Get the max team number for this quiz
-    const maxNrTeam = await teamQuizRepository.createQueryBuilder('teamQuiz')
-        .leftJoinAndSelect('teamQuiz.team', 'team')
+    const maxNrTeamQuiz = await teamQuizRepository.createQueryBuilder('teamQuiz')
         .where('teamQuiz.quiz.id = :quizId', { quizId })
-        .orderBy('team.nr', 'DESC')
+        .orderBy('teamQuiz.nr', 'DESC')
         .getOne();
 
-    const nextNr = maxNrTeam ? maxNrTeam.team.nr + 1 : 1;
+    const nextNr = maxNrTeamQuiz ? maxNrTeamQuiz.nr + 1 : 1;
 
-    // Create new team or update existing one
+    // Create new team or reuse existing one
     let team = await teamRepository.findOneBy({ name });
     if (!team) {
-        team = teamRepository.create({ name, nr: nextNr });
-        await teamRepository.save(team);
-    } else {
-        team.nr = nextNr;
+        team = teamRepository.create({ name });
         await teamRepository.save(team);
     }
 
@@ -74,7 +70,8 @@ router.post('/quiz/:quizId', async (req, res) => {
 
     const teamQuiz = teamQuizRepository.create({
         team,
-        quiz
+        quiz,
+        nr: nextNr
     });
 
     await teamQuizRepository.save(teamQuiz);
@@ -150,37 +147,47 @@ router.put('/:teamId/order', async (req, res) => {
         return res.status(404).json({ message: 'Team not found' });
     }
 
-    // Get all teams in this quiz to update their order
-    const allTeamQuizzes = await teamQuizRepository.find({
-        where: { quiz: { id: quizId } },
-        relations: ['team'],
-        order: { team: { nr: 'ASC' } }
+    // Find the specific TeamQuiz entry for this team in this quiz
+    const teamQuiz = await teamQuizRepository.findOne({
+        where: { 
+            team: { id: teamId },
+            quiz: { id: quizId }
+        }
     });
 
-    const teams = allTeamQuizzes.map(tq => tq.team);
-    const oldNr = team.nr;
+    if (!teamQuiz) {
+        return res.status(404).json({ message: 'Team not found in this quiz' });
+    }
+
+    // Get all team-quiz entries for this quiz to update their order
+    const allTeamQuizzes = await teamQuizRepository.find({
+        where: { quiz: { id: quizId } },
+        order: { nr: 'ASC' }
+    });
+
+    const oldNr = teamQuiz.nr;
 
     // Update the order of all affected teams
     if (nr > oldNr) {
         // Moving down - decrease nr of teams that were below
-        for (const t of teams) {
-            if (t.nr > oldNr && t.nr <= nr && t.id !== teamId) {
-                t.nr--;
-                await teamRepository.save(t);
+        for (const tq of allTeamQuizzes) {
+            if (tq.nr > oldNr && tq.nr <= nr && tq.id !== teamQuiz.id) {
+                tq.nr--;
+                await teamQuizRepository.save(tq);
             }
         }
     } else if (nr < oldNr) {
         // Moving up - increase nr of teams that were above
-        for (const t of teams) {
-            if (t.nr >= nr && t.nr < oldNr && t.id !== teamId) {
-                t.nr++;
-                await teamRepository.save(t);
+        for (const tq of allTeamQuizzes) {
+            if (tq.nr >= nr && tq.nr < oldNr && tq.id !== teamQuiz.id) {
+                tq.nr++;
+                await teamQuizRepository.save(tq);
             }
         }
     }
 
-    team.nr = nr;
-    await teamRepository.save(team);
+    teamQuiz.nr = nr;
+    await teamQuizRepository.save(teamQuiz);
     return res.json(team);
 });
 

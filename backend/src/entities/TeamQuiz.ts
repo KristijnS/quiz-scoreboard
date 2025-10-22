@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, ManyToOne, OneToMany, Index } from "typeorm";
+import { Entity, PrimaryGeneratedColumn, ManyToOne, OneToMany, Index, Column } from "typeorm";
 import { Quiz } from "./Quiz";
 import { Team } from "./Team";
 import { Score } from "./Score";
@@ -8,6 +8,10 @@ import { Score } from "./Score";
 export class TeamQuiz {
     @PrimaryGeneratedColumn()
     id!: number;
+
+    @Column({ default: 1 })
+    @Index() // Index on nr for sorting teams within a quiz
+    nr!: number;
 
     @ManyToOne(() => Team, team => team.teamQuizzes)
     @Index() // Index on teamId for faster joins

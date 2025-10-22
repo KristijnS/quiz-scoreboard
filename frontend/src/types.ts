@@ -21,11 +21,11 @@ export interface Round {
 export interface Team {
     id: number;
     name: string;
-    nr: number;
 }
 
 export interface TeamQuiz {
     id: number;
+    nr: number;
     team: Team;
     scores: Score[];
 }
