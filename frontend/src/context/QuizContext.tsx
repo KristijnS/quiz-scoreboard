@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode, useCallback, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Quiz } from '../types';
 import { quizApi } from '../services/api';
@@ -21,13 +21,26 @@ export function QuizProvider({ children }: { children: ReactNode }) {
     const [quiz, setQuiz] = useState<Quiz | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<Error | null>(null);
+    
+    // Track if a request is in flight to prevent duplicate calls
+    const loadingRef = useRef(false);
+    const currentIdRef = useRef<string | null>(null);
 
     const loadQuiz = useCallback(async () => {
         if (!id) {
             setQuiz(null);
+            loadingRef.current = false;
+            currentIdRef.current = null;
             return;
         }
 
+        // Prevent duplicate calls for the same ID
+        if (loadingRef.current && currentIdRef.current === id) {
+            return;
+        }
+
+        loadingRef.current = true;
+        currentIdRef.current = id;
         setLoading(true);
         setError(null);
         try {
@@ -38,6 +51,7 @@ export function QuizProvider({ children }: { children: ReactNode }) {
             setQuiz(null);
         } finally {
             setLoading(false);
+            loadingRef.current = false;
         }
     }, [id]);
 
