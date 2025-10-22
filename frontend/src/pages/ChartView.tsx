@@ -1,5 +1,4 @@
-import { useEffect, useState, useMemo, useCallback, memo } from 'react';
-import { useParams } from 'react-router-dom';
+import { useMemo, useCallback, memo } from 'react';
 import { Container, Typography, Box, Paper, useTheme } from '@mui/material';
 import {
     Chart as ChartJS,
@@ -15,8 +14,7 @@ import {
     Legend
 } from 'chart.js';
     import { Chart } from 'react-chartjs-2';
-    import { Quiz } from '../types';
-    import { quizApi } from '../services/api';
+    import { useQuiz } from '../context/QuizContext';
 
 ChartJS.register(
     CategoryScale,
@@ -32,28 +30,9 @@ ChartJS.register(
 );
 
     function ChartView() {
-        const { id } = useParams();
         const theme = useTheme();
-        const [quiz, setQuiz] = useState<Quiz | null>(null);
+        const { quiz } = useQuiz();
         const isDarkMode = theme.palette.mode === 'dark';
-
-        useEffect(() => {
-            if (id) {
-                loadQuiz();
-            }
-            // eslint-disable-next-line react-hooks/exhaustive-deps
-        }, [id]);
-
-        const loadQuiz = useCallback(async () => {
-            if (!id) return;
-            const quizId = parseInt(id, 10);
-            if (isNaN(quizId)) {
-                console.error('Invalid quiz ID');
-                return;
-            }
-            const data = await quizApi.get(quizId);
-            setQuiz(data);
-        }, [id]);
 
     if (!quiz) return <div>Loading...</div>;
 

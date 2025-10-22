@@ -1,5 +1,4 @@
 import { useEffect, useState, useMemo, useCallback, memo } from 'react';
-import { useParams } from 'react-router-dom';
 import {
     Container,
     Paper,
@@ -17,44 +16,32 @@ import {
     MenuItem,
     TextField
 } from '@mui/material';
-import { Quiz, Round } from '../types';
-import { quizApi, scoreApi } from '../services/api';
+import { Round } from '../types';
+import { scoreApi } from '../services/api';
+import { useQuiz } from '../context/QuizContext';
 
 function AddScore() {
-    const { id } = useParams();
-    const [quiz, setQuiz] = useState<Quiz | null>(null);
+    const { quiz } = useQuiz();
     const [selectedRound, setSelectedRound] = useState<Round | null>(null);
     const [scores, setScores] = useState<{ [key: string]: string }>({});
     const [errors, setErrors] = useState<{ [key: string]: string | null }>({});
 
+    // Set initial round when quiz loads
     useEffect(() => {
-        if (id) loadQuiz();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [id]);
+        if (!quiz) return;
+        const sortedRounds = (quiz.rounds || []).slice().sort((a, b) => a.nr - b.nr);
+        if (sortedRounds.length > 0 && !selectedRound) {
+            const key = `lastRound_quiz_${quiz.id}`;
+            const saved = localStorage.getItem(key);
+            const savedRound = saved ? sortedRounds.find(r => r.id === parseInt(saved, 10)) : null;
+            setSelectedRound(savedRound || sortedRounds[0]);
+        }
+    }, [quiz, selectedRound]);
 
     useEffect(() => {
         if (selectedRound) loadScores();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedRound]);
-
-    const loadQuiz = useCallback(async () => {
-        if (!id) return;
-        const quizId = parseInt(id, 10);
-        if (isNaN(quizId)) {
-            console.error('Invalid quiz ID');
-            return;
-        }
-        const data = await quizApi.get(quizId);
-        setQuiz(data);
-        // restore last selected round for this quiz from localStorage, or default to first round
-        const sortedRounds = (data.rounds || []).slice().sort((a, b) => a.nr - b.nr);
-        if (sortedRounds.length > 0) {
-            const key = `lastRound_quiz_${data.id}`;
-            const saved = localStorage.getItem(key);
-            const savedRound = saved ? sortedRounds.find(r => r.id === parseInt(saved, 10)) : null;
-            setSelectedRound(savedRound || sortedRounds[0]);
-        }
-    }, [id]);
 
     const loadScores = useCallback(async () => {
         if (!selectedRound || !quiz) return;

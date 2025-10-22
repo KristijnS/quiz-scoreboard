@@ -114,7 +114,7 @@ function QuizManagement() {
 
     const handleDeleteTeam = useCallback(async (teamId: number) => {
         if (!id) return;
-        await teamApi.removeFromQuiz(id, teamId);
+        await teamApi.removeFromQuiz(parseInt(id, 10), teamId);
         loadQuiz();
     }, [id, loadQuiz]);
 
@@ -131,7 +131,7 @@ function QuizManagement() {
                 title: newRoundTitle,
                 nr: nextNr,
                 maxScore,
-                quizId: id
+                quizId: parseInt(id, 10)
             } as CreateRoundData);
             
             setNewRoundTitle('');
@@ -207,14 +207,14 @@ function QuizManagement() {
             const temp = teams[index].nr;
             teams[index].nr = teams[index - 1].nr;
             teams[index - 1].nr = temp;
-            await teamApi.updateOrder(teams[index].id, teams[index].nr, id!);
-            await teamApi.updateOrder(teams[index - 1].id, teams[index - 1].nr, id!);
+            await teamApi.updateOrder(teams[index].id, teams[index].nr, parseInt(id!));
+            await teamApi.updateOrder(teams[index - 1].id, teams[index - 1].nr, parseInt(id!));
         } else if (direction === 'down' && index < teams.length - 1) {
             const temp = teams[index].nr;
             teams[index].nr = teams[index + 1].nr;
             teams[index + 1].nr = temp;
-            await teamApi.updateOrder(teams[index].id, teams[index].nr, id!);
-            await teamApi.updateOrder(teams[index + 1].id, teams[index + 1].nr, id!);
+            await teamApi.updateOrder(teams[index].id, teams[index].nr, parseInt(id!));
+            await teamApi.updateOrder(teams[index + 1].id, teams[index + 1].nr, parseInt(id!));
         }
         
         loadQuiz();
@@ -236,7 +236,7 @@ function QuizManagement() {
         if (!id || !editTeamName.trim()) return;
         try {
             setEditTeamError(null);
-            await teamApi.update(teamId, editTeamName, id);
+            await teamApi.update(teamId, editTeamName, parseInt(id, 10));
             setEditingTeamId(null);
             setEditTeamName('');
             loadQuiz();
@@ -285,7 +285,7 @@ function QuizManagement() {
     const handleScaleConversionChange = useCallback(async (enabled: boolean) => {
         if (!id) return;
         setScaleConversionEnabled(enabled);
-        await quizApi.update(id, { scaleConversionEnabled: enabled });
+        await quizApi.update(parseInt(id, 10), { scaleConversionEnabled: enabled });
         loadQuiz();
     }, [id, loadQuiz]);
 
@@ -294,7 +294,7 @@ function QuizManagement() {
         setStandardScale(value);
         const numValue = parseFloat(value);
         if (!isNaN(numValue) && numValue > 0) {
-            await quizApi.update(id, { standardScale: numValue });
+            await quizApi.update(parseInt(id, 10), { standardScale: numValue });
             loadQuiz();
         }
     }, [id, loadQuiz]);
@@ -314,7 +314,7 @@ function QuizManagement() {
     const handleGradientChange = useCallback(async (enabled: boolean) => {
         if (!id) return;
         setGradientEnabled(enabled);
-        await quizApi.update(id, { gradientEnabled: enabled });
+        await quizApi.update(parseInt(id, 10), { gradientEnabled: enabled });
         loadQuiz();
     }, [id, loadQuiz]);
 

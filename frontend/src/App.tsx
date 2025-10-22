@@ -2,9 +2,8 @@
 import { AppBar, Toolbar, Typography, Switch, Box, Button, Menu, MenuItem, IconButton } from '@mui/material';
 import { Settings as SettingsIcon } from '@mui/icons-material';
 import { Routes, Route, useLocation, useNavigate } from 'react-router-dom';
-import { useState, MouseEvent, useEffect, useCallback, lazy, Suspense, memo } from 'react';
-import { quizApi } from './services/api';
-import { Quiz } from './types';
+import { useState, MouseEvent, useCallback, lazy, Suspense, memo } from 'react';
+import { QuizProvider, useQuiz } from './context/QuizContext';
 
 // Lazy load route components for faster initial load and navigation
 const StartQuiz = lazy(() => import('./pages/StartQuiz'));
@@ -23,24 +22,17 @@ interface AppProps {
 // Import app icon from the electron folder (bundled during build)
 import appIcon from '../../electron/scoreboard_icon_crown.svg';
 
-function App({ darkMode, setDarkMode }: AppProps) {
-  // Get current quiz id from URL if present
+// Inner component that uses QuizContext
+function AppContent({ darkMode, setDarkMode }: AppProps) {
   const location = useLocation();
   const match = location.pathname.match(/\/quiz\/(\d+)/);
   const quizId = match ? match[1] : '';
   const navigate = useNavigate();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const menuOpen = Boolean(anchorEl);
-  const [quiz, setQuiz] = useState<Quiz | null>(null);
-
-  // Load quiz data when quizId changes
-  useEffect(() => {
-    if (quizId) {
-      quizApi.get(parseInt(quizId, 10)).then(setQuiz).catch(() => setQuiz(null));
-    } else {
-      setQuiz(null);
-    }
-  }, [quizId]);
+  
+  // Get quiz from context instead of fetching it
+  const { quiz } = useQuiz();
 
   const handleMenuClick = useCallback((event: MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -293,6 +285,15 @@ function App({ darkMode, setDarkMode }: AppProps) {
         </Routes>
       </Suspense>
     </Box>
+  );
+}
+
+// Wrapper component that provides quiz context
+function App(props: AppProps) {
+  return (
+    <QuizProvider>
+      <AppContent {...props} />
+    </QuizProvider>
   );
 }
 

@@ -1,5 +1,4 @@
-import { useEffect, useState, useMemo, useCallback, memo } from 'react';
-import { useParams } from 'react-router-dom';
+import { useState, useMemo, useCallback, memo } from 'react';
 import {
     Container,
     Typography,
@@ -12,25 +11,12 @@ import {
     TableRow,
     Box
 } from '@mui/material';
-import { Quiz } from '../types';
-import { quizApi } from '../services/api';
+import { useQuiz } from '../context/QuizContext';
 
 function Scoreboard() {
-    const { id } = useParams();
-    const [quiz, setQuiz] = useState<Quiz | null>(null);
+    const { quiz } = useQuiz();
     const [sortColumn, setSortColumn] = useState<string>('total');
     const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
-
-    useEffect(() => {
-        if (id) loadQuiz();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [id]);
-
-    const loadQuiz = useCallback(async () => {
-        if (!id) return;
-        const data = await quizApi.get(parseInt(id, 10));
-        setQuiz(data);
-    }, [id]);
 
     // Memoize sorted rounds to avoid sorting on every render
     const sortedRounds = useMemo(() => {
