@@ -36,26 +36,6 @@ ChartJS.register(
 
     if (!quiz) return <div>Loading...</div>;
 
-        // Helper function to wrap long text into multiple lines (memoized)
-        const wrapLabel = useCallback((label: string, maxCharsPerLine: number = 15): string[] => {
-            const words = label.split(' ');
-            const lines: string[] = [];
-            let currentLine = '';
-
-            for (const word of words) {
-                const testLine = currentLine ? `${currentLine} ${word}` : word;
-                if (testLine.length <= maxCharsPerLine) {
-                    currentLine = testLine;
-                } else {
-                    if (currentLine) lines.push(currentLine);
-                    currentLine = word;
-                }
-            }
-            if (currentLine) lines.push(currentLine);
-
-            return lines;
-        }, []);
-
         // Pre-calculate all team totals
         const teamTotals = useMemo(() => {
             if (!quiz.rounds || quiz.rounds.length === 0) return [];
@@ -128,7 +108,8 @@ ChartJS.register(
         const fontSizes = useMemo(() => {
             const teamCount = sortedTeams.length;
             return {
-                xAxis: teamCount > 30 ? 13 : teamCount > 20 ? 14 : teamCount > 10 ? 15 : 16,
+                xAxisNumber: teamCount > 30 ? 14 : teamCount > 20 ? 16 : teamCount > 10 ? 18 : 20,
+                xAxisName: teamCount > 30 ? 11 : teamCount > 20 ? 12 : teamCount > 10 ? 13 : 14,
                 legend: teamCount > 30 ? 16 : 18,
                 title: teamCount > 30 ? 22 : 24,
                 yAxis: 16,
@@ -136,10 +117,10 @@ ChartJS.register(
             };
         }, [sortedTeams.length]);
 
-        // Memoize labels
+        // Memoize labels - just team numbers for prominent display
         const labels = useMemo(() => {
-            return sortedTeams.map((item) => wrapLabel(`${item.teamQuiz.nr}. ${item.teamQuiz.team.name}`));
-        }, [sortedTeams, wrapLabel]);
+            return sortedTeams.map((item) => `${item.teamQuiz.nr}`);
+        }, [sortedTeams]);
 
         // Memoize team scores
         const teamScores = useMemo(() => {
@@ -240,17 +221,27 @@ ChartJS.register(
                 x: {
                     ticks: {
                         font: {
-                            size: fontSizes.xAxis,
+                            size: fontSizes.xAxisNumber,
                             weight: 'bold' as const
                         },
                         color: isDarkMode ? 'rgba(255, 255, 255, 0.87)' : 'rgba(0, 0, 0, 0.87)',
                         maxRotation: 0,
                         minRotation: 0,
                         autoSkip: false,
-                        padding: 2
+                        padding: 8,
+                        callback: function(_value: any, index: number) {
+                            // Return only team number prominently
+                            const team = sortedTeams[index];
+                            if (!team) return '';
+                            return `#${team.teamQuiz.nr}`;
+                        }
                     },
                     grid: {
                         display: false
+                    },
+                    afterFit: (scale: any) => {
+                        // Add extra space for rotated team names
+                        scale.paddingBottom = fontSizes.teamCount > 30 ? 110 : fontSizes.teamCount > 20 ? 105 : 100;
                     }
                 },
                 y: {
@@ -270,13 +261,42 @@ ChartJS.register(
             },
             layout: {
                 padding: {
-                    left: 5,
-                    right: 5,
-                    top: 5,
-                    bottom: fontSizes.teamCount > 30 ? 5 : fontSizes.teamCount > 20 ? 8 : 10
+                    left: 10,
+                    right: 10,
+                    top: 10,
+                    bottom: fontSizes.teamCount > 30 ? 110 : fontSizes.teamCount > 20 ? 100 : 90
                 }
             }
         }), [quiz.name, fontSizes, isDarkMode, maxScore, teamScores, sortedTeams]);
+
+        // Custom plugin to draw rotated team names - memoized
+        const teamNamePlugin = useMemo(() => ({
+            id: 'teamNames',
+            afterDraw: (chart: any) => {
+                const ctx = chart.ctx;
+                const xAxis = chart.scales.x;
+                const yAxis = chart.scales.y;
+                
+                ctx.save();
+                ctx.font = `bold ${fontSizes.xAxisName}px Arial`;
+                ctx.fillStyle = isDarkMode ? 'rgba(255, 255, 255, 0.87)' : 'rgba(0, 0, 0, 0.87)';
+                ctx.textAlign = 'left';
+                ctx.textBaseline = 'top';
+                
+                sortedTeams.forEach((team, index) => {
+                    const x = xAxis.getPixelForValue(index);
+                    const y = yAxis.bottom + 50; // Position further below to avoid overlap
+                    
+                    ctx.save();
+                    ctx.translate(x, y);
+                    ctx.rotate(Math.PI / 4); // +45 degrees (rotates downward to the right)
+                    ctx.fillText(team.teamQuiz.team.name, 0, 0);
+                    ctx.restore();
+                });
+                
+                ctx.restore();
+            }
+        }), [sortedTeams, fontSizes.xAxisName, isDarkMode]);
 
         return (
             <Container maxWidth={false} sx={{ px: { xs: 1, sm: 2, md: 3 }, py: 1 }}>
@@ -293,7 +313,13 @@ ChartJS.register(
                         }}
                     >
                         {hasChartData ? (
-                            <Chart type="bar" options={options} data={data} style={{ height: '100%', width: '100%' }} />
+                            <Chart 
+                                type="bar" 
+                                options={options} 
+                                data={data} 
+                                plugins={[teamNamePlugin]}
+                                style={{ height: '100%', width: '100%' }} 
+                            />
                         ) : (
                             <Typography color="textSecondary" sx={{ p: 2, fontSize: '18px' }}>
                                 No chart data available for this quiz.
