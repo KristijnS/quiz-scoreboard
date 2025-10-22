@@ -1,6 +1,5 @@
 import { useState, useMemo, useCallback, memo } from 'react';
 import {
-    Container,
     Typography,
     Paper,
     Table,
@@ -181,105 +180,129 @@ function Scoreboard() {
     if (!quiz) return null;
 
     return (
-        <Container maxWidth="lg">
-            <Box sx={{ mt: 4, mb: 4 }}>
-                <TableContainer component={Paper}>
-                    <Table>
-                        <TableHead>
-                            <TableRow>
-                                <TableCell 
-                                    width="80px" 
-                                    onClick={() => handleSort('rank')}
-                                    sx={{ cursor: 'pointer', userSelect: 'none', '&:hover': { bgcolor: 'action.hover' }, whiteSpace: 'nowrap' }}
-                                >
-                                    Rank {sortColumn === 'rank' && (sortDirection === 'asc' ? '↑' : '↓')}
-                                </TableCell>
-                                <TableCell 
-                                    width="70px" 
-                                    onClick={() => handleSort('nr')}
-                                    sx={{ cursor: 'pointer', userSelect: 'none', '&:hover': { bgcolor: 'action.hover' }, whiteSpace: 'nowrap' }}
-                                >
-                                    Nr {sortColumn === 'nr' && (sortDirection === 'asc' ? '↑' : '↓')}
-                                </TableCell>
-                                <TableCell 
-                                    onClick={() => handleSort('team')}
-                                    sx={{ cursor: 'pointer', userSelect: 'none', '&:hover': { bgcolor: 'action.hover' }, whiteSpace: 'nowrap' }}
-                                >
-                                    Team {sortColumn === 'team' && (sortDirection === 'asc' ? '↑' : '↓')}
-                                </TableCell>
-                                {sortedRounds.map((round) => {
-                                    const maxScore = quiz.scaleConversionEnabled && !round.excludeFromScale && quiz.standardScale
-                                        ? quiz.standardScale
-                                        : round.maxScore;
-                                    const formattedMax = quiz.scaleConversionEnabled && !round.excludeFromScale
-                                        ? Math.floor(maxScore).toString()
-                                        : maxScore.toString();
-                                    return (
-                                        <TableCell 
-                                            key={round.id}
-                                            onClick={() => handleSort(`round-${round.id}`)}
-                                            sx={{ cursor: 'pointer', userSelect: 'none', '&:hover': { bgcolor: 'action.hover' }, minWidth: '120px' }}
-                                        >
-                                            <Box sx={{ whiteSpace: 'nowrap' }}>
-                                                {round.title} {sortColumn === `round-${round.id}` && (sortDirection === 'asc' ? '↑' : '↓')}
-                                            </Box>
-                                            <Typography variant="caption">
-                                                (max: {formattedMax})
-                                            </Typography>
-                                        </TableCell>
-                                    );
-                                })}
-                                <TableCell 
-                                    onClick={() => handleSort('total')}
-                                    sx={{ cursor: 'pointer', userSelect: 'none', '&:hover': { bgcolor: 'action.hover' }, whiteSpace: 'nowrap', minWidth: '90px' }}
-                                >
-                                    Total {sortColumn === 'total' && (sortDirection === 'asc' ? '↑' : '↓')}
-                                </TableCell>
-                            </TableRow>
-                        </TableHead>
-                        <TableBody>
-                            {sortedTeams.map((teamQuiz) => {
-                                const rank = teamRanksMap.get(teamQuiz.id) || 0;
-                                const total = teamTotalsMap.get(teamQuiz.id) || 0;
-                                const bgColor = teamColorsMap.get(teamQuiz.id) || 'transparent';
-                                
+        <Box sx={{ width: '100%', px: 2, py: 2 }}>
+            <TableContainer 
+                component={Paper}
+                sx={{ 
+                    width: '100%',
+                    maxHeight: 'calc(100vh - 120px)', // Full viewport height minus AppBar and padding
+                    overflow: 'auto'
+                }}
+            >
+                <Table stickyHeader sx={{ tableLayout: 'fixed', width: '100%' }}>
+                    <TableHead>
+                        <TableRow>
+                            <TableCell 
+                                width="60px"
+                                onClick={() => handleSort('rank')}
+                                sx={{ cursor: 'pointer', userSelect: 'none', '&:hover': { bgcolor: 'action.hover' }, whiteSpace: 'nowrap', p: 1 }}
+                            >
+                                Rank {sortColumn === 'rank' && (sortDirection === 'asc' ? '↑' : '↓')}
+                            </TableCell>
+                            <TableCell 
+                                width="50px"
+                                onClick={() => handleSort('nr')}
+                                sx={{ cursor: 'pointer', userSelect: 'none', '&:hover': { bgcolor: 'action.hover' }, whiteSpace: 'nowrap', p: 1 }}
+                            >
+                                Nr {sortColumn === 'nr' && (sortDirection === 'asc' ? '↑' : '↓')}
+                            </TableCell>
+                            <TableCell 
+                                width="200px"
+                                onClick={() => handleSort('team')}
+                                sx={{ cursor: 'pointer', userSelect: 'none', '&:hover': { bgcolor: 'action.hover' }, whiteSpace: 'nowrap', p: 1 }}
+                            >
+                                Team {sortColumn === 'team' && (sortDirection === 'asc' ? '↑' : '↓')}
+                            </TableCell>
+                            {sortedRounds.map((round) => {
+                                const maxScore = quiz.scaleConversionEnabled && !round.excludeFromScale && quiz.standardScale
+                                    ? quiz.standardScale
+                                    : round.maxScore;
+                                const formattedMax = quiz.scaleConversionEnabled && !round.excludeFromScale
+                                    ? Math.floor(maxScore).toString()
+                                    : maxScore.toString();
                                 return (
-                                    <TableRow key={teamQuiz.id}>
-                                        <TableCell sx={{ bgcolor: bgColor }}>
-                                            <strong>{rank}</strong>
-                                        </TableCell>
-                                        <TableCell>{teamQuiz.team.nr}</TableCell>
-                                        <TableCell>
-                                            <Typography sx={{ fontWeight: 'bold' }}>
-                                                {teamQuiz.team.name}
-                                            </Typography>
-                                        </TableCell>
-                                        {sortedRounds.map((round) => {
-                                            const score = teamScoresMap.get(`${teamQuiz.id}-${round.id}`) || 0;
-                                            const formatted = quiz.scaleConversionEnabled && !round.excludeFromScale 
-                                                ? score.toFixed(2) 
-                                                : score.toString();
-                                            return (
-                                                <TableCell key={round.id}>
-                                                    {formatted}
-                                                </TableCell>
-                                            );
-                                        })}
-                                        <TableCell>
-                                            <strong>
-                                                {quiz.scaleConversionEnabled 
-                                                    ? total.toFixed(2) 
-                                                    : total}
-                                            </strong>
-                                        </TableCell>
-                                    </TableRow>
+                                    <TableCell 
+                                        key={round.id}
+                                        onClick={() => handleSort(`round-${round.id}`)}
+                                        sx={{ 
+                                            cursor: 'pointer', 
+                                            userSelect: 'none', 
+                                            '&:hover': { bgcolor: 'action.hover' },
+                                            p: 1,
+                                            overflow: 'hidden',
+                                            textOverflow: 'ellipsis'
+                                        }}
+                                    >
+                                        <Box sx={{ 
+                                            whiteSpace: 'nowrap',
+                                            overflow: 'hidden',
+                                            textOverflow: 'ellipsis',
+                                            fontSize: '0.875rem'
+                                        }}>
+                                            {round.title} {sortColumn === `round-${round.id}` && (sortDirection === 'asc' ? '↑' : '↓')}
+                                        </Box>
+                                        <Typography variant="caption" sx={{ fontSize: '0.7rem' }}>
+                                            (max: {formattedMax})
+                                        </Typography>
+                                    </TableCell>
                                 );
                             })}
-                        </TableBody>
-                    </Table>
-                </TableContainer>
-            </Box>
-        </Container>
+                            <TableCell 
+                                width="80px"
+                                onClick={() => handleSort('total')}
+                                sx={{ cursor: 'pointer', userSelect: 'none', '&:hover': { bgcolor: 'action.hover' }, whiteSpace: 'nowrap', p: 1 }}
+                            >
+                                Total {sortColumn === 'total' && (sortDirection === 'asc' ? '↑' : '↓')}
+                            </TableCell>
+                        </TableRow>
+                    </TableHead>
+                    <TableBody>
+                        {sortedTeams.map((teamQuiz) => {
+                            const rank = teamRanksMap.get(teamQuiz.id) || 0;
+                            const total = teamTotalsMap.get(teamQuiz.id) || 0;
+                            const bgColor = teamColorsMap.get(teamQuiz.id) || 'transparent';
+                            
+                            return (
+                                <TableRow key={teamQuiz.id}>
+                                    <TableCell sx={{ bgcolor: bgColor, p: 1 }}>
+                                        <strong>{rank}</strong>
+                                    </TableCell>
+                                    <TableCell sx={{ p: 1 }}>{teamQuiz.team.nr}</TableCell>
+                                    <TableCell sx={{ p: 1 }}>
+                                        <Typography sx={{ 
+                                            fontWeight: 'bold',
+                                            overflow: 'hidden',
+                                            textOverflow: 'ellipsis',
+                                            whiteSpace: 'nowrap'
+                                        }}>
+                                            {teamQuiz.team.name}
+                                        </Typography>
+                                    </TableCell>
+                                    {sortedRounds.map((round) => {
+                                        const score = teamScoresMap.get(`${teamQuiz.id}-${round.id}`) || 0;
+                                        const formatted = quiz.scaleConversionEnabled && !round.excludeFromScale 
+                                            ? score.toFixed(2) 
+                                            : score.toString();
+                                        return (
+                                            <TableCell key={round.id} sx={{ p: 1, textAlign: 'center' }}>
+                                                {formatted}
+                                            </TableCell>
+                                        );
+                                    })}
+                                    <TableCell sx={{ p: 1 }}>
+                                        <strong>
+                                            {quiz.scaleConversionEnabled 
+                                                ? total.toFixed(2) 
+                                                : total}
+                                        </strong>
+                                    </TableCell>
+                                </TableRow>
+                            );
+                        })}
+                    </TableBody>
+                </Table>
+            </TableContainer>
+        </Box>
     );
 }
 
