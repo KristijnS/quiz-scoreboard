@@ -1,89 +1,99 @@
 # Chart View Optimization for Large Team Counts
 
+**Last Updated:** October 23, 2025  
+**Current Implementation:** Custom Plugin with Rotated Labels
+
 ## Changes Made
 
 ### Problem
-- Long team names on the X-axis took up excessive space
-- Chart became cramped with many teams (especially 30+ teams)
-- Labels rotated at 45° reduced available chart height
-- Fixed font sizes didn't scale for different team counts
+- Chart labels were overlapping and unreadable with 40+ teams
+- Team names were too small to read
+- Labels overlapped with chart bars and team numbers
+- Standard Chart.js label rotation wasn't flexible enough
 
-### Solution Implemented
+### Current Solution (v2 - Custom Plugin)
 
-#### 1. **Multi-Line Label Wrapping** 🎯
-- Added `wrapLabel()` function to intelligently wrap long team names
-- Default: 15 characters per line
-- Splits on word boundaries to maintain readability
-- Labels now display as arrays of strings (Chart.js handles multi-line automatically)
+#### 1. **Two-Tier Label System** 🎯
+- **Team Numbers**: Large, bold, horizontal display (#1, #2, etc.)
+- **Team Names**: Separate rotated labels below numbers using custom plugin
 
+#### 2. **Custom Chart.js Plugin** 🔧
+Created a custom `afterDraw` plugin to render team names:
 ```typescript
-const wrapLabel = (label: string, maxCharsPerLine: number = 15): string[] => {
-    const words = label.split(' ');
-    const lines: string[] = [];
-    let currentLine = '';
-
-    for (const word of words) {
-        const testLine = currentLine ? `${currentLine} ${word}` : word;
-        if (testLine.length <= maxCharsPerLine) {
-            currentLine = testLine;
-        } else {
-            if (currentLine) lines.push(currentLine);
-            currentLine = word;
-        }
+const teamNamePlugin = useMemo(() => ({
+    id: 'teamNames',
+    afterDraw: (chart: any) => {
+        const ctx = chart.ctx;
+        const xAxis = chart.scales.x;
+        const yAxis = chart.scales.y;
+        
+        ctx.save();
+        ctx.font = `bold ${fontSizes.xAxisName}px Arial`;
+        ctx.fillStyle = isDarkMode ? 'rgba(255, 255, 255, 0.87)' : 'rgba(0, 0, 0, 0.87)';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'top';
+        
+        sortedTeams.forEach((team, index) => {
+            const x = xAxis.getPixelForValue(index);
+            const y = yAxis.bottom + 50; // Position below team number
+            
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.rotate(Math.PI / 4); // +45 degrees downward-right
+            ctx.fillText(team.teamQuiz.team.name, 0, 0);
+            ctx.restore();
+        });
+        
+        ctx.restore();
     }
-    if (currentLine) lines.push(currentLine);
-    return lines;
-};
+}), [sortedTeams, fontSizes.xAxisName, isDarkMode]);
 ```
 
-#### 2. **Responsive Font Sizing** 📏
+#### 3. **Responsive Font Sizing** 📏
 Dynamic font sizes based on team count:
 
-| Teams | X-Axis Font | Legend Font | Title Font |
-|-------|-------------|-------------|------------|
-| ≤10   | 12px        | 12px        | 18px       |
-| 11-20 | 11px        | 12px        | 18px       |
-| 21-30 | 10px        | 12px        | 18px       |
-| 31+   | 9px         | 11px        | 16px       |
+| Teams | Team Number | Team Name | Legend | Title |
+|-------|-------------|-----------|--------|-------|
+| ≤10   | 20px        | 14px      | 18px   | 24px  |
+| 11-20 | 18px        | 13px      | 18px   | 24px  |
+| 21-30 | 16px        | 12px      | 16px   | 22px  |
+| 31+   | 14px        | 11px      | 16px   | 22px  |
 
-#### 3. **Horizontal Labels (No Rotation)** ↔️
-- Changed from 45° rotation to horizontal (0°)
-- Wrapped labels fit better horizontally
-- More vertical space for the actual chart
-- Better readability
+#### 4. **Rotated Team Names (45°)** ↗️
+- Team names rotate downward-right at 45° angle
+- Prevents horizontal overlap even with 40+ teams
+- `textAlign: 'left'` ensures rotation pivots from text start
+- `textBaseline: 'top'` ensures proper vertical alignment
 
-#### 4. **Optimized Chart Dimensions** 📐
-**Before:**
-```tsx
-height: '70vh'
-padding: { top: 10, bottom: 30 }
-container padding: 4
+#### 5. **Optimized Spacing** 📐
+**X-Axis Configuration:**
+```typescript
+afterFit: (scale: any) => {
+    // Extra space for rotated team names
+    scale.paddingBottom = teamCount > 30 ? 110 : teamCount > 20 ? 105 : 100;
+}
 ```
 
-**After:**
-```tsx
-height: 'calc(100vh - 120px)'  // Uses full viewport minus header/margins
-maxHeight: '900px'             // Caps at 900px for very large screens
-minHeight: '500px'             // Ensures minimum usability
-padding: dynamic (5-20px based on team count)
-container padding: 1-3 (responsive)
+**Layout Padding:**
+```typescript
+layout: {
+    padding: {
+        left: 10,
+        right: 10,
+        top: 10,
+        bottom: teamCount > 30 ? 110 : teamCount > 20 ? 100 : 90
+    }
+}
 ```
-
-#### 5. **Reduced Padding for Large Team Counts** 📦
-- Title padding: 15-20px (was 30px)
-- Legend padding: 10-15px (was 20px)
-- Bottom layout padding: 10-20px (was fixed)
-- Container margins reduced from 4 to 2-3
 
 #### 6. **Enhanced Tooltip** 💬
-- Shows full unwrapped team name on hover
-- Prevents information loss from wrapped labels
-- Custom callback to display original label:
+- Shows full team name on hover (no rotation, no truncation)
+- Custom callback to display complete information:
 ```typescript
 callbacks: {
     title: (context: any) => {
         const index = context[0].dataIndex;
-        return `${sortedTeams[index].team.nr}. ${sortedTeams[index].team.name}`;
+        return `${sortedTeams[index].teamQuiz.nr}. ${sortedTeams[index].teamQuiz.team.name}`;
     }
 }
 ```
@@ -92,30 +102,32 @@ callbacks: {
 
 ## Results
 
-### Space Optimization
-- **Chart Height Gain:** ~20-25% more vertical space for bars
-- **Label Readability:** Improved with horizontal multi-line text
-- **Responsive:** Adapts automatically to team count
+### Visual Improvements
+- ✅ **Team Numbers Prominent:** Large (#1, #2) displayed horizontally - easy to scan
+- ✅ **Team Names Readable:** 11-14px bold text at 45° angle - no overlap
+- ✅ **Professional Appearance:** Consistent with standard chart design patterns
+- ✅ **No Overlap:** Team names extend diagonally without interfering
 
 ### Team Capacity
-| Team Count | Readability | Performance |
-|------------|-------------|-------------|
-| 1-10       | ★★★★★      | Excellent   |
-| 11-20      | ★★★★★      | Excellent   |
-| 21-30      | ★★★★☆      | Good        |
-| 31-40      | ★★★★☆      | Good        |
-| 41+        | ★★★☆☆      | Acceptable  |
+| Team Count | Number Readability | Name Readability | Performance |
+|------------|-------------------|------------------|-------------|
+| 1-10       | ★★★★★            | ★★★★★           | Excellent   |
+| 11-20      | ★★★★★            | ★★★★★           | Excellent   |
+| 21-30      | ★★★★★            | ★★★★☆           | Good        |
+| 31-40      | ★★★★☆            | ★★★★☆           | Good        |
+| 41+        | ★★★★☆            | ★★★☆☆           | Acceptable  |
 
-### Example Label Transformations
-**Before (single line, rotated):**
+### Visual Layout
 ```
-"1. Very Long Team Name Here" (rotated 45°)
-```
-
-**After (wrapped, horizontal):**
-```
-1. Very Long
-Team Name Here
+  |
+  | [Bar Chart with Colors]
+  |_________________________________
+    #1      #2      #3      #4
+     T       T       T       T
+      e       e       e       e
+       a       a       a       a
+        m       m       m       m
+         A       B       C       D
 ```
 
 ---
@@ -124,52 +136,101 @@ Team Name Here
 
 ### Font Size Calculation
 ```typescript
-const teamCount = sortedTeams.length;
-const xAxisFontSize = teamCount > 30 ? 9 : teamCount > 20 ? 10 : teamCount > 10 ? 11 : 12;
-const legendFontSize = teamCount > 30 ? 11 : 12;
-const titleFontSize = teamCount > 30 ? 16 : 18;
-```
-
-### Layout Padding Calculation
-```typescript
-layout: {
-    padding: {
-        left: 5,
-        right: 5,
-        top: 5,
-        bottom: teamCount > 30 ? 10 : teamCount > 20 ? 15 : 20
+const fontSizes = useMemo(() => {
+    const teamCount = sortedTeams.length;
+    return {
+        xAxisNumber: teamCount > 30 ? 14 : teamCount > 20 ? 16 : teamCount > 10 ? 18 : 20,
+        xAxisName: teamCount > 30 ? 11 : teamCount > 20 ? 12 : teamCount > 10 ? 13 : 14,
+        legend: teamCount > 30 ? 16 : 18,
+        title: teamCount > 30 ? 22 : 24,
+        yAxis: 16,
+        teamCount
+    };
+}, [sortedTeams.length]);
     }
 }
 ```
 
-### Responsive Container
+### Plugin Registration
 ```typescript
-<Container maxWidth={false} sx={{ px: { xs: 1, sm: 2, md: 3 }, py: 2 }}>
-    <Paper sx={{ 
-        p: { xs: 1, sm: 2, md: 2 }, 
-        height: 'calc(100vh - 120px)', 
-        minHeight: '500px',
-        maxHeight: '900px'
-    }}>
+// Add to Chart component
+<Chart 
+    type="bar" 
+    options={options} 
+    data={data} 
+    plugins={[teamNamePlugin]}
+    style={{ height: '100%', width: '100%' }} 
+/>
 ```
 
 ---
 
+## Implementation Notes
+
+### Why Custom Plugin?
+- **Standard Chart.js limitations:** Multi-line labels with rotation weren't flexible enough
+- **Custom rendering control:** Full control over positioning, rotation, and styling
+- **Better spacing:** Can position labels exactly where needed without Chart.js constraints
+- **Performance:** Memoized plugin only re-renders when team data changes
+
+### Key Advantages
+1. ✅ Team numbers always visible and readable (horizontal)
+2. ✅ Team names don't overlap (45° rotation provides natural spacing)
+3. ✅ Scales dynamically for any team count (tested with 40+ teams)
+4. ✅ Professional appearance matching standard chart conventions
+
+### Migration from v1
+**Old approach (v1):** Multi-line wrapping with horizontal labels
+- ❌ Labels still overlapped with many teams
+- ❌ Limited control over spacing
+- ❌ Team names hard to read when wrapped
+
+**New approach (v2):** Custom plugin with rotated names
+- ✅ No overlap even with 40+ teams
+- ✅ Larger, more readable fonts
+- ✅ Clear visual hierarchy (number → name)
+
+---
+
+## Performance Impact
+
+- **Rendering:** Negligible - plugin runs after chart render
+- **Memory:** Minimal - plugin is memoized
+- **Responsiveness:** Excellent - scales with team count automatically
 ## Testing Recommendations
 
 ### Manual Testing Scenarios
 1. **Small Quiz (1-5 teams)** - Verify chart doesn't look too spacious
-2. **Medium Quiz (10-15 teams)** - Check label wrapping works correctly
+2. **Medium Quiz (10-15 teams)** - Check label spacing is adequate
 3. **Large Quiz (20-30 teams)** - Verify all labels visible and readable
-4. **Very Large Quiz (35-40 teams)** - Test performance and readability limits
-5. **Long Team Names** - Test with names like "The Super Long Team Name That Should Wrap Multiple Times"
+4. **Very Large Quiz (35-40 teams)** - Test readability limits with rotated names
+5. **Long Team Names** - Test with names like "The Super Long Team Name That Goes On Forever"
 6. **Short Team Names** - Test with names like "T1", "A", "B"
 7. **Mixed Names** - Combination of short and long names
 
 ### Viewport Testing
-- Desktop (1920x1080)
-- Laptop (1440x900)
-- Tablet (1024x768)
+- Desktop (1920x1080) - Full chart experience
+- Laptop (1440x900) - Standard resolution
+- Tablet (1024x768) - Minimum recommended size
+
+---
+
+## Files Modified
+
+- `frontend/src/pages/ChartView.tsx` - Main implementation
+  - Added `teamNamePlugin` custom Chart.js plugin
+  - Updated font size calculations
+  - Increased bottom padding for rotated labels
+  - Changed X-axis callback to show only team numbers
+
+---
+
+## Related Documentation
+
+- [Performance Optimization](./PERFORMANCE_OPTIMIZATION.md) - Overall app performance
+- [Navigation Performance](./NAVIGATION_PERFORMANCE.md) - Page loading optimization
+- [Data Fetching Optimization](./DATA_FETCHING_OPTIMIZATION.md) - API call optimization
+
 - Small screens (responsive behavior)
 
 ---
