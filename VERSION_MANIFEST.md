@@ -1,7 +1,7 @@
 # Quiz Scoreboard - Version Manifest
 
-**Version:** 1.0.0  
-**Release Date:** October 2025  
+**Version:** 1.1.0  
+**Release Date:** October 23, 2025  
 **Platform:** Cross-platform (macOS, Windows)  
 **Status:** ✅ Production Ready
 
@@ -45,11 +45,16 @@
 - ✅ Exclude rounds from scale calculation
 - ✅ Team ordering (move up/down)
 - ✅ Round ordering (move up/down)
-- ✅ Chart visualization (line graph)
+- ✅ Chart visualization (bar chart with team scores)
+- ✅ Team score display on chart (between number and name)
+- ✅ Responsive chart layout (mobile/tablet/desktop)
+- ✅ Print functionality with optimized layout
 - ✅ Delete confirmations with dependency warnings
 - ✅ Cascade deletion (cleanup related data)
 - ✅ Dark mode interface (default)
+- ✅ Light mode with proper contrast
 - ✅ Quiz name in app bar
+- ✅ Mock quiz generator with funky names
 
 ### Technical Features
 - ✅ Foreign key constraints enabled
@@ -264,6 +269,14 @@ quiz-scoreboard/
 - [ ] GraphQL API option
 
 ## Change Log
+
+### Version 1.1.0 (October 23, 2025)
+- **Enhanced Chart View:** Team scores displayed on chart
+- **Responsive Design:** Mobile, tablet, and desktop optimizations
+- **Print Functionality:** Optimized print layout with landscape orientation
+- **Bug Fixes:** Team names visibility in light mode
+- **UI Improvements:** Increased font sizes and better spacing
+- **Technical:** Fixed stale closure bug in Chart.js plugin
 
 ### Version 1.0.0 (October 2025)
 - Initial release
