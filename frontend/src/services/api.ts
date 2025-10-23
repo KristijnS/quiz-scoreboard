@@ -21,7 +21,9 @@ export const teamApi = {
     updateOrder: (id: number, nr: number, quizId: number) =>
         axios.put<Team>(`${API_URL}/teams/${id}/order`, { nr, quizId }).then(res => res.data),
     update: (id: number, name: string, quizId: number) =>
-        axios.put<Team>(`${API_URL}/teams/${id}`, { name, quizId }).then(res => res.data)
+        axios.put<Team>(`${API_URL}/teams/${id}`, { name, quizId }).then(res => res.data),
+    toggleExcluded: (id: number, excluded: boolean, quizId: number) =>
+        axios.put<Team>(`${API_URL}/teams/${id}/excluded`, { excluded, quizId }).then(res => res.data)
 };
 
 export const roundApi = {

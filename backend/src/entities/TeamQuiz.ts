@@ -60,6 +60,22 @@ export class TeamQuiz {
     nr!: number;
 
     /**
+     * Excluded flag - indicates if team didn't show up for the quiz
+     * 
+     * When true: Team is hidden from scoring pages but remains in quiz setup
+     * Hidden from: Scoreboard, AddScore, ChartView, Top5
+     * Still visible in: QuizManagement (team list with toggle)
+     * 
+     * Use case: Team registered but didn't show up, want to keep record
+     * Default: false (team is participating)
+     * 
+     * Indexed for performance: Enables fast filtering (WHERE excluded = false)
+     */
+    @Column({ default: false })
+    @Index() // Index on excluded for filtering active teams
+    excluded!: boolean;
+
+    /**
      * Reference to the actual Team entity
      * Many TeamQuiz entries can reference the same Team
      * 

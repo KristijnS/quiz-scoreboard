@@ -28,7 +28,7 @@ function Scoreboard() {
         if (!quiz) return new Map<number, number>();
         const map = new Map<number, number>();
         
-        quiz.teamQuizzes.forEach(teamQuiz => {
+        quiz.teamQuizzes.filter(tq => !tq.excluded).forEach(teamQuiz => {
             const total = teamQuiz.scores.reduce((sum, score) => {
                 const round = quiz.rounds.find(r => r.id === score.round.id);
                 if (!round) return sum;
@@ -49,7 +49,7 @@ function Scoreboard() {
     const teamRanksMap = useMemo(() => {
         if (!quiz) return new Map<number, number>();
         
-        const sortedByTotal = [...quiz.teamQuizzes].sort((a, b) => {
+        const sortedByTotal = [...quiz.teamQuizzes].filter(tq => !tq.excluded).sort((a, b) => {
             const totalA = teamTotalsMap.get(a.id) || 0;
             const totalB = teamTotalsMap.get(b.id) || 0;
             return totalB - totalA;
@@ -68,7 +68,7 @@ function Scoreboard() {
         if (!quiz) return new Map<string, number>();
         const map = new Map<string, number>();
         
-        quiz.teamQuizzes.forEach(teamQuiz => {
+        quiz.teamQuizzes.filter(tq => !tq.excluded).forEach(teamQuiz => {
             quiz.rounds.forEach(round => {
                 const score = teamQuiz.scores.find(s => s.round.id === round.id);
                 const points = score ? score.points : 0;
@@ -89,14 +89,15 @@ function Scoreboard() {
 
     // Pre-calculate all gradient colors
     const teamColorsMap = useMemo(() => {
-        if (!quiz || !quiz.gradientEnabled || quiz.teamQuizzes.length <= 1) {
+        const activeTeams = quiz?.teamQuizzes.filter(tq => !tq.excluded) || [];
+        if (!quiz || !quiz.gradientEnabled || activeTeams.length <= 1) {
             return new Map<number, string>();
         }
         
         const map = new Map<number, string>();
-        const totalTeams = quiz.teamQuizzes.length;
+        const totalTeams = activeTeams.length;
         
-        quiz.teamQuizzes.forEach(teamQuiz => {
+        activeTeams.forEach(teamQuiz => {
             const rank = teamRanksMap.get(teamQuiz.id) || 0;
             const position = (rank - 1) / (totalTeams - 1);
             
@@ -135,7 +136,7 @@ function Scoreboard() {
     const sortedTeams = useMemo(() => {
         if (!quiz) return [];
         
-        const teams = [...quiz.teamQuizzes];
+        const teams = [...quiz.teamQuizzes].filter(tq => !tq.excluded);
         
         return teams.sort((a, b) => {
             let aValue: number | string = 0;

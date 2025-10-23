@@ -42,7 +42,7 @@ ChartJS.register(
         const teamTotals = useMemo(() => {
             if (!quiz.rounds || quiz.rounds.length === 0) return [];
             
-            return (quiz.teamQuizzes || []).map(teamQuiz => {
+            return (quiz.teamQuizzes || []).filter(tq => !tq.excluded).map(teamQuiz => {
                 const scoreMap = new Map<number, number>();
                 if (teamQuiz.scores) {
                     teamQuiz.scores.forEach(score => {

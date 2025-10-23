@@ -14,6 +14,7 @@ import {
     IconButton,
     useTheme,
     Checkbox,
+    Switch,
     Tooltip,
     Dialog,
     DialogTitle,
@@ -34,6 +35,7 @@ function QuizManagement() {
     const [newTeamName, setNewTeamName] = useState('');
     const [newRoundTitle, setNewRoundTitle] = useState('');
     const [newRoundMaxScore, setNewRoundMaxScore] = useState('10');
+    const [newRoundExcludeFromScale, setNewRoundExcludeFromScale] = useState(false);
     
     // Edit state for teams
     const [editingTeamId, setEditingTeamId] = useState<number | null>(null);
@@ -118,6 +120,16 @@ function QuizManagement() {
         loadQuiz();
     }, [id, loadQuiz]);
 
+    const handleToggleExcluded = useCallback(async (teamId: number, currentExcluded: boolean) => {
+        if (!id) return;
+        try {
+            await teamApi.toggleExcluded(teamId, !currentExcluded, id);
+            loadQuiz();
+        } catch (error) {
+            console.error('Failed to toggle excluded status:', error);
+        }
+    }, [id, loadQuiz]);
+
     const [roundError, setRoundError] = useState<string | null>(null);
 
     const handleAddRound = useCallback(async () => {
@@ -131,11 +143,13 @@ function QuizManagement() {
                 title: newRoundTitle,
                 nr: nextNr,
                 maxScore,
-                quizId: id
+                quizId: id,
+                excludeFromScale: newRoundExcludeFromScale
             } as CreateRoundData);
             
             setNewRoundTitle('');
             setNewRoundMaxScore('10');
+            setNewRoundExcludeFromScale(false);
             loadQuiz();
         } catch (error: any) {
             if (error.response?.data?.message) {
@@ -144,7 +158,7 @@ function QuizManagement() {
                 setRoundError('Failed to add round');
             }
         }
-    }, [id, newRoundTitle, newRoundMaxScore, quiz, loadQuiz]);
+    }, [id, newRoundTitle, newRoundMaxScore, newRoundExcludeFromScale, quiz, loadQuiz]);
 
     const handleDeleteRoundClick = useCallback((roundId: number, roundTitle: string) => {
         if (!quiz) return;
@@ -385,17 +399,27 @@ function QuizManagement() {
                             <Table>
                                 <TableHead>
                                     <TableRow>
-                                        <TableCell width="10%">Nr</TableCell>
-                                        <TableCell width="70%">Team Name</TableCell>
+                                        <TableCell width="8%">Nr</TableCell>
+                                        <TableCell sx={{ width: '80px', maxWidth: '80px', padding: '8px 4px', whiteSpace: 'nowrap' }}>Active</TableCell>
+                                        <TableCell>Team Name</TableCell>
                                         <TableCell align="right" width="20%">Actions</TableCell>
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
                                     {sortedTeams
                                         .map((teamQuiz, index, sortedTeams) => (
-                                            <TableRow key={teamQuiz.id}>
-                                                <TableCell width="10%">{teamQuiz.nr}</TableCell>
-                                                <TableCell width="70%">
+                                            <TableRow key={teamQuiz.id} sx={{ opacity: teamQuiz.excluded ? 0.5 : 1 }}>
+                                                <TableCell width="8%">{teamQuiz.nr}</TableCell>
+                                                <TableCell sx={{ width: '80px', maxWidth: '80px', padding: '8px 4px', whiteSpace: 'nowrap' }}>
+                                                    <Tooltip title={teamQuiz.excluded ? "Team excluded from scoring" : "Team active"}>
+                                                        <Switch
+                                                            checked={!teamQuiz.excluded}
+                                                            onChange={() => handleToggleExcluded(teamQuiz.team.id, teamQuiz.excluded)}
+                                                            size="small"
+                                                        />
+                                                    </Tooltip>
+                                                </TableCell>
+                                                <TableCell width="66%">
                                                     {editingTeamId === teamQuiz.team.id ? (
                                                         <TextField
                                                             size="small"
@@ -515,8 +539,9 @@ function QuizManagement() {
                                         </TableRow>
                                     )}
                                     <TableRow>
-                                        <TableCell width="10%">New</TableCell>
-                                        <TableCell width="70%">
+                                        <TableCell width="8%">New</TableCell>
+                                        <TableCell sx={{ width: '80px', maxWidth: '80px', padding: '8px 4px', whiteSpace: 'nowrap' }}></TableCell>
+                                        <TableCell>
                                             <TextField
                                                 size="small"
                                                 placeholder="New team name"
@@ -745,9 +770,10 @@ function QuizManagement() {
                                         </TableCell>
                                         <TableCell>
                                             <Checkbox
-                                                checked={false}
-                                                disabled
+                                                checked={newRoundExcludeFromScale}
+                                                onChange={(e) => setNewRoundExcludeFromScale(e.target.checked)}
                                                 size="small"
+                                                disabled={!scaleConversionEnabled}
                                             />
                                         </TableCell>
                                         <TableCell align="right">

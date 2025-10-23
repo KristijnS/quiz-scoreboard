@@ -13,7 +13,7 @@ function Top5() {
     const allTeamsSorted = useMemo(() => {
         if (!quiz || !quiz.rounds || quiz.rounds.length === 0) return [];
         
-        const teamTotals = (quiz.teamQuizzes || []).map(teamQuiz => {
+        const teamTotals = (quiz.teamQuizzes || []).filter(tq => !tq.excluded).map(teamQuiz => {
             const scoreMap = new Map<number, number>();
             if (teamQuiz.scores) {
                 teamQuiz.scores.forEach(score => {

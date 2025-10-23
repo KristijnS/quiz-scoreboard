@@ -191,6 +191,7 @@ router.put('/:teamId/order', async (req, res) => {
     return res.json(team);
 });
 
+export default router;
 // Toggle team excluded status
 router.put('/:teamId/excluded', async (req, res) => {
     const { excluded, quizId } = req.body;
@@ -215,5 +216,3 @@ router.put('/:teamId/excluded', async (req, res) => {
     await teamQuizRepository.save(teamQuiz);
     return res.json({ ...teamQuiz.team, excluded: teamQuiz.excluded });
 });
-
-export default router;

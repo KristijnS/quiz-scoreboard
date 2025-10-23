@@ -26,6 +26,7 @@ export interface Team {
 export interface TeamQuiz {
     id: number;
     nr: number;
+    excluded: boolean;
     team: Team;
     scores: Score[];
 }

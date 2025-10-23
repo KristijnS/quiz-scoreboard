@@ -47,7 +47,7 @@ function AddScore() {
         if (!selectedRound || !quiz) return;
         const data = await scoreApi.getForRound(selectedRound.id);
         const newScores: { [key: string]: string } = {};
-        quiz.teamQuizzes.forEach(tq => {
+        quiz.teamQuizzes.filter(tq => !tq.excluded).forEach(tq => {
             const score = data.find(s => s.teamQuiz.id === tq.id);
             newScores[tq.id] = score ? score.points.toString() : '0';
         });
@@ -108,7 +108,7 @@ function AddScore() {
     // Memoize sorted teams to avoid sorting on every render
     const sortedTeams = useMemo(() => {
         if (!quiz) return [];
-        return [...quiz.teamQuizzes].sort((a, b) => a.nr - b.nr);
+        return [...quiz.teamQuizzes].filter(tq => !tq.excluded).sort((a, b) => a.nr - b.nr);
     }, [quiz]);
 
     // Memoize min/max round numbers
