@@ -1,6 +1,6 @@
 
 import { AppBar, Toolbar, Typography, Switch, Box, Button, Menu, MenuItem, IconButton } from '@mui/material';
-import { Settings as SettingsIcon } from '@mui/icons-material';
+import { Settings as SettingsIcon, Print as PrintIcon } from '@mui/icons-material';
 import { Routes, Route, useLocation, useNavigate } from 'react-router-dom';
 import { useState, MouseEvent, useCallback, lazy, Suspense, memo } from 'react';
 import { QuizProvider, useQuiz } from './context/QuizContext';
@@ -147,6 +147,20 @@ function AppContent({ darkMode, setDarkMode }: AppProps) {
             >Chart</Button>
           </Box>
           <Box sx={{ flexGrow: 1 }} />
+          {location.pathname === `/quiz/${quizId}/chart` && (
+            <IconButton
+              onClick={() => window.print()}
+              color={darkMode ? 'primary' : 'inherit'}
+              sx={{
+                color: darkMode ? '#90caf9' : undefined,
+                '&:hover': darkMode ? {
+                  bgcolor: 'rgba(144, 202, 249, 0.2)'
+                } : undefined
+              }}
+            >
+              <PrintIcon />
+            </IconButton>
+          )}
           <IconButton
             onClick={handleMenuClick}
             color={darkMode ? 'primary' : 'inherit'}
@@ -251,31 +265,24 @@ function AppContent({ darkMode, setDarkMode }: AppProps) {
               />
             </MenuItem>
             <MenuItem 
-              onClick={(e) => { e.stopPropagation(); }}
-              sx={darkMode ? {
-                '&:hover': { bgcolor: 'rgba(144, 202, 249, 0.2)' },
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center'
-              } : { display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
-            >
-              <Typography variant="body2">Developer Tools</Typography>
-              <Switch
-                checked={(() => {
+              onClick={() => {
+                const currentState = (() => {
                   try { return localStorage.getItem('devToolsEnabled') === 'true'; } catch { return false; }
-                })()}
-                onChange={(e) => {
-                  const enabled = e.target.checked;
-                  try { localStorage.setItem('devToolsEnabled', enabled ? 'true' : 'false'); } catch {}
-                  // Call into preload to toggle devtools
-                  if ((window as any).electron && typeof (window as any).electron.toggleDevTools === 'function') {
-                    (window as any).electron.toggleDevTools(enabled);
-                  }
-                }}
-                onClick={(e) => e.stopPropagation()}
-                color={darkMode ? 'primary' : 'default'}
-                inputProps={{ 'aria-label': 'toggle devtools' }}
-              />
+                })();
+                const newState = !currentState;
+                try { localStorage.setItem('devToolsEnabled', newState ? 'true' : 'false'); } catch {}
+                // Call into preload to toggle devtools
+                if ((window as any).electron && typeof (window as any).electron.toggleDevTools === 'function') {
+                  (window as any).electron.toggleDevTools(newState);
+                }
+              }}
+              sx={darkMode ? {
+                '&:hover': {
+                  bgcolor: 'rgba(144, 202, 249, 0.2)'
+                }
+              } : {}}
+            >
+              Developer Tools
             </MenuItem>
           </Menu>
         </Toolbar>

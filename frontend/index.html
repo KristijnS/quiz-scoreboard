@@ -5,6 +5,44 @@
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Quiz Scoreboard</title>
+    <style>
+      @media print {
+        @page {
+          size: landscape;
+          margin: 0.5cm;
+        }
+        
+        /* Hide navigation elements */
+        header, .MuiAppBar-root {
+          display: none !important;
+        }
+        
+        /* Optimize chart container for print */
+        body {
+          margin: 0;
+          padding: 0;
+        }
+        
+        .chart-container {
+          padding: 0 !important;
+          margin: 0 !important;
+        }
+        
+        .chart-paper {
+          box-shadow: none !important;
+          height: auto !important;
+          min-height: auto !important;
+          page-break-inside: avoid;
+        }
+        
+        /* Ensure canvas prints at full size */
+        canvas {
+          max-width: 100% !important;
+          height: auto !important;
+          page-break-inside: avoid;
+        }
+      }
+    </style>
   </head>
   <body>
     <div id="root"></div>

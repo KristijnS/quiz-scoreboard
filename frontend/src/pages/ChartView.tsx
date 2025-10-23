@@ -33,6 +33,8 @@ ChartJS.register(
         const theme = useTheme();
         const { quiz } = useQuiz();
         const isDarkMode = theme.palette.mode === 'dark';
+        
+        console.log('ChartView render - theme.palette.mode:', theme.palette.mode, 'isDarkMode:', isDarkMode);
 
     if (!quiz) return <div>Loading...</div>;
 
@@ -107,13 +109,21 @@ ChartJS.register(
         // Calculate responsive font sizes - memoized
         const fontSizes = useMemo(() => {
             const teamCount = sortedTeams.length;
+            const isMobile = window.innerWidth < 600;
+            const isTablet = window.innerWidth >= 600 && window.innerWidth < 960;
+            
+            // Base multiplier for screen size
+            const sizeMultiplier = isMobile ? 0.7 : isTablet ? 0.85 : 1;
+            
             return {
-                xAxisNumber: teamCount > 30 ? 14 : teamCount > 20 ? 16 : teamCount > 10 ? 18 : 20,
-                xAxisName: teamCount > 30 ? 11 : teamCount > 20 ? 12 : teamCount > 10 ? 13 : 14,
-                legend: teamCount > 30 ? 16 : 18,
-                title: teamCount > 30 ? 22 : 24,
-                yAxis: 16,
-                teamCount
+                xAxisNumber: Math.round((teamCount > 30 ? 16 : teamCount > 20 ? 18 : teamCount > 10 ? 20 : 22) * sizeMultiplier),
+                xAxisName: Math.round((teamCount > 30 ? 13 : teamCount > 20 ? 14 : teamCount > 10 ? 15 : 16) * sizeMultiplier),
+                legend: Math.round((teamCount > 30 ? 16 : 18) * sizeMultiplier),
+                title: Math.round((teamCount > 30 ? 22 : 24) * sizeMultiplier),
+                yAxis: Math.round(16 * sizeMultiplier),
+                teamCount,
+                isMobile,
+                isTablet
             };
         }, [sortedTeams.length]);
 
@@ -240,8 +250,10 @@ ChartJS.register(
                         display: false
                     },
                     afterFit: (scale: any) => {
-                        // Add extra space for rotated team names
-                        scale.paddingBottom = fontSizes.teamCount > 30 ? 110 : fontSizes.teamCount > 20 ? 105 : 100;
+                        // Add extra space for rotated team names - responsive
+                        const basePadding = fontSizes.teamCount > 30 ? 150 : fontSizes.teamCount > 20 ? 140 : 130;
+                        const mobilePadding = fontSizes.isMobile ? basePadding * 0.8 : basePadding;
+                        scale.paddingBottom = mobilePadding;
                     }
                 },
                 y: {
@@ -252,7 +264,8 @@ ChartJS.register(
                             size: fontSizes.yAxis,
                             weight: 'bold' as const
                         },
-                        color: isDarkMode ? 'rgba(255, 255, 255, 0.87)' : 'rgba(0, 0, 0, 0.87)'
+                        color: isDarkMode ? 'rgba(255, 255, 255, 0.87)' : 'rgba(0, 0, 0, 0.87)',
+                        maxTicksLimit: fontSizes.isMobile ? 8 : undefined
                     },
                     grid: {
                         color: isDarkMode ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)'
@@ -261,34 +274,57 @@ ChartJS.register(
             },
             layout: {
                 padding: {
-                    left: 10,
-                    right: 10,
-                    top: 10,
-                    bottom: fontSizes.teamCount > 30 ? 110 : fontSizes.teamCount > 20 ? 100 : 90
+                    left: fontSizes.isMobile ? 10 : 30,
+                    right: fontSizes.isMobile ? 30 : 70,
+                    top: fontSizes.isMobile ? 5 : 10,
+                    bottom: fontSizes.isMobile ? 
+                        (fontSizes.teamCount > 30 ? 100 : fontSizes.teamCount > 20 ? 90 : 80) :
+                        (fontSizes.teamCount > 30 ? 140 : fontSizes.teamCount > 20 ? 130 : 120)
                 }
             }
         }), [quiz.name, fontSizes, isDarkMode, maxScore, teamScores, sortedTeams]);
 
-        // Custom plugin to draw rotated team names - memoized
-        const teamNamePlugin = useMemo(() => ({
+        // Custom plugin to draw rotated team names - recreated on every render to capture current isDarkMode
+        const teamNamePlugin = {
             id: 'teamNames',
             afterDraw: (chart: any) => {
                 const ctx = chart.ctx;
                 const xAxis = chart.scales.x;
                 const yAxis = chart.scales.y;
                 
+                if (!xAxis || !yAxis) {
+                    return;
+                }
+                
+                // Use current isDarkMode value from component scope
+                const textColor = isDarkMode ? '#FFFFFF' : '#000000';
+                
                 ctx.save();
-                ctx.font = `bold ${fontSizes.xAxisName}px Arial`;
-                ctx.fillStyle = isDarkMode ? 'rgba(255, 255, 255, 0.87)' : 'rgba(0, 0, 0, 0.87)';
-                ctx.textAlign = 'left';
-                ctx.textBaseline = 'top';
                 
                 sortedTeams.forEach((team, index) => {
                     const x = xAxis.getPixelForValue(index);
-                    const y = yAxis.bottom + 50; // Position further below to avoid overlap
+                    
+                    // Responsive positioning
+                    const scoreOffset = fontSizes.isMobile ? 28 : 38;
+                    const nameOffset = fontSizes.isMobile ? 50 : 65;
+                    
+                    // Draw total score (horizontal, not rotated)
+                    ctx.font = `bold ${fontSizes.xAxisName + 2}px Arial`;
+                    ctx.fillStyle = textColor;
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'top';
+                    const scoreY = yAxis.bottom + scoreOffset;
+                    ctx.fillText(`${Math.round(team.total)}`, x, scoreY);
+                    
+                    // Draw team name (rotated)
+                    ctx.font = `bold ${fontSizes.xAxisName}px Arial`;
+                    ctx.fillStyle = textColor;
+                    ctx.textAlign = 'left';
+                    ctx.textBaseline = 'top';
+                    const nameY = yAxis.bottom + nameOffset;
                     
                     ctx.save();
-                    ctx.translate(x, y);
+                    ctx.translate(x, nameY);
                     ctx.rotate(Math.PI / 4); // +45 degrees (rotates downward to the right)
                     ctx.fillText(team.teamQuiz.team.name, 0, 0);
                     ctx.restore();
@@ -296,24 +332,31 @@ ChartJS.register(
                 
                 ctx.restore();
             }
-        }), [sortedTeams, fontSizes.xAxisName, isDarkMode]);
+        };
 
         return (
-            <Container maxWidth={false} sx={{ px: { xs: 1, sm: 2, md: 3 }, py: 1 }}>
-                <Box sx={{ mt: 1, mb: 1 }}>
+            <Container maxWidth={false} sx={{ px: { xs: 0.5, sm: 1, md: 2, lg: 3 }, py: { xs: 0.5, sm: 1 } }} className="chart-container">
+                <Box sx={{ mt: { xs: 0.5, sm: 1 }, mb: { xs: 0.5, sm: 1 } }}>
                     <Paper 
                         sx={{ 
-                            p: { xs: 1, sm: 1.5, md: 2 }, 
-                            height: 'calc(100vh - 80px)', 
-                            minHeight: '600px',
-                            maxHeight: '1200px',
+                            p: { xs: 0.5, sm: 1, md: 1.5, lg: 2 }, 
+                            height: { 
+                                xs: 'calc(100vh - 80px)',
+                                sm: 'calc(100vh - 90px)',
+                                md: 'calc(100vh - 100px)'
+                            },
+                            minHeight: { xs: '400px', sm: '500px', md: '600px' },
                             display: 'flex', 
                             alignItems: 'center', 
-                            justifyContent: 'center' 
+                            justifyContent: 'center',
+                            bgcolor: 'background.paper',
+                            overflow: 'hidden'
                         }}
+                        className="chart-paper"
                     >
                         {hasChartData ? (
                             <Chart 
+                                key={`chart-${isDarkMode ? 'dark' : 'light'}`}
                                 type="bar" 
                                 options={options} 
                                 data={data} 
