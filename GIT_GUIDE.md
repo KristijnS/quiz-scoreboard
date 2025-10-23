@@ -177,7 +177,7 @@ Use clear, descriptive commit messages:
 2. **Add remote and push:**
 ```bash
 # Add remote repository
-git remote add origin https://github.com/your-username/quiz-scoreboard.git
+git remote add origin https://github.com/kristijns/quiz-scoreboard.git
 
 # Push to remote
 git push -u origin main
