@@ -1,8 +1,22 @@
-# Release Notes - Version 1.2.0
+# Release Notes - Version 1.2.0 "Electric Eggplant"
 
 **Release Date:** October 23, 2025
 
 ## 🎉 New Features
+
+### Team Exclusion Feature
+Added the ability to **exclude teams from scoring** when they don't show up, while keeping them in quiz records for reference.
+
+#### Key Features:
+- **Toggle Switch**: Active/Inactive switch in QuizManagement team list
+- **Visual Feedback**: Excluded teams appear dimmed (50% opacity) with tooltip
+- **Hidden from Scoring**: Excluded teams are filtered from:
+  - Scoreboard (all rankings and calculations)
+  - Add Score page (score entry)
+  - Chart View (bar chart display)
+  - Top 5 presentation page
+- **Preserved in Management**: Teams remain visible in QuizManagement with toggle control
+- **Database Support**: New `excluded` field in TeamQuiz entity with indexing for performance
 
 ### Top 5 Presentation Page
 Added a brand new **Top 5** presentation page designed for displaying quiz results during live events with dramatic flair and visual hierarchy.
@@ -42,6 +56,11 @@ Access the Top 5 page from the Quiz Management page via the new "Top 5" button.
 - Fixed centering of top 5 cards and last place card as a unified group
 - Ensured proper spacing between 5th place and last place cards
 - Made entire page scrollable to prevent content being cut off on smaller screens
+
+### QuizManagement UI Improvements
+- **Column Width Optimization**: Reduced Active column width from 10% to 80px fixed, increased Team Name column space
+- **New Team Row**: Fixed alignment to match 4-column structure (Nr, Active, Team Name, Actions)
+- **Round Exclude Checkbox**: Enabled functional excludeFromScale checkbox for new rounds during creation
 
 ## 🎨 Visual Enhancements
 
