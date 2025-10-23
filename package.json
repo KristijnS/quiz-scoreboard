@@ -1,6 +1,6 @@
 {
   "name": "quiz-scoreboard",
-  "version": "1.0.0",
+  "version": "1.2.0",
   "description": "Quiz Scoreboard Application",
   "scripts": {
     "install:all": "npm install && cd frontend && npm install && cd ../backend && npm install && cd ../electron && npm install",

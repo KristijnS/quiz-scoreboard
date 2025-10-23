@@ -1,6 +1,6 @@
 # Quiz Scoreboard - Version Manifest
 
-**Version:** 1.1.0  
+**Version:** 1.2.0  
 **Release Date:** October 23, 2025  
 **Platform:** Cross-platform (macOS, Windows)  
 **Status:** ✅ Production Ready
@@ -55,6 +55,11 @@
 - ✅ Light mode with proper contrast
 - ✅ Quiz name in app bar
 - ✅ Mock quiz generator with funky names
+- ✅ Top 5 presentation page with progressive reveal
+- ✅ Visual hierarchy with trophy and medal icons
+- ✅ Last place recognition with special card
+- ✅ Compact grid view for remaining teams (60+ teams)
+- ✅ Fully responsive design with scrolling support
 
 ### Technical Features
 - ✅ Foreign key constraints enabled
