@@ -185,34 +185,81 @@ function Scoreboard() {
                 component={Paper}
                 sx={{ 
                     width: '100%',
-                    maxHeight: 'calc(100vh - 120px)', // Full viewport height minus AppBar and padding
-                    overflow: 'auto'
+                    maxHeight: 'calc(100vh - 120px)',
+                    overflow: 'auto',
+                    position: 'relative'
                 }}
             >
-                <Table stickyHeader sx={{ tableLayout: 'fixed', width: '100%' }}>
+                <Table stickyHeader sx={{ tableLayout: 'auto', width: 'max-content' }}>
                     <TableHead>
                         <TableRow>
+                            {/* Frozen left columns */}
                             <TableCell 
-                                width="60px"
                                 onClick={() => handleSort('rank')}
-                                sx={{ cursor: 'pointer', userSelect: 'none', '&:hover': { bgcolor: 'action.hover' }, whiteSpace: 'nowrap', p: 1 }}
+                                sx={{ 
+                                    cursor: 'pointer', 
+                                    userSelect: 'none', 
+                                    '&:hover': { bgcolor: 'action.hover' }, 
+                                    whiteSpace: 'nowrap', 
+                                    p: 1.5,
+                                    fontSize: '1rem',
+                                    fontWeight: 'bold',
+                                    position: 'sticky',
+                                    left: 0,
+                                    bgcolor: 'background.paper',
+                                    zIndex: 3,
+                                    minWidth: '80px',
+                                    borderRight: '2px solid',
+                                    borderColor: 'divider'
+                                }}
                             >
                                 Rank {sortColumn === 'rank' && (sortDirection === 'asc' ? '↑' : '↓')}
                             </TableCell>
                             <TableCell 
-                                width="50px"
                                 onClick={() => handleSort('nr')}
-                                sx={{ cursor: 'pointer', userSelect: 'none', '&:hover': { bgcolor: 'action.hover' }, whiteSpace: 'nowrap', p: 1 }}
+                                sx={{ 
+                                    cursor: 'pointer', 
+                                    userSelect: 'none', 
+                                    '&:hover': { bgcolor: 'action.hover' }, 
+                                    whiteSpace: 'nowrap', 
+                                    p: 1.5,
+                                    fontSize: '1rem',
+                                    fontWeight: 'bold',
+                                    position: 'sticky',
+                                    left: '80px',
+                                    bgcolor: 'background.paper',
+                                    zIndex: 3,
+                                    minWidth: '70px',
+                                    borderRight: '2px solid',
+                                    borderColor: 'divider'
+                                }}
                             >
                                 Nr {sortColumn === 'nr' && (sortDirection === 'asc' ? '↑' : '↓')}
                             </TableCell>
                             <TableCell 
-                                width="200px"
                                 onClick={() => handleSort('team')}
-                                sx={{ cursor: 'pointer', userSelect: 'none', '&:hover': { bgcolor: 'action.hover' }, whiteSpace: 'nowrap', p: 1 }}
+                                sx={{ 
+                                    cursor: 'pointer', 
+                                    userSelect: 'none', 
+                                    '&:hover': { bgcolor: 'action.hover' }, 
+                                    whiteSpace: 'nowrap', 
+                                    p: 1.5,
+                                    fontSize: '1rem',
+                                    fontWeight: 'bold',
+                                    position: 'sticky',
+                                    left: '150px',
+                                    bgcolor: 'background.paper',
+                                    zIndex: 3,
+                                    minWidth: '250px',
+                                    borderRight: '3px solid',
+                                    borderColor: 'divider',
+                                    boxShadow: '3px 0 5px rgba(0,0,0,0.1)'
+                                }}
                             >
                                 Team {sortColumn === 'team' && (sortDirection === 'asc' ? '↑' : '↓')}
                             </TableCell>
+                            
+                            {/* Scrollable round columns */}
                             {sortedRounds.map((round) => {
                                 const maxScore = quiz.scaleConversionEnabled && !round.excludeFromScale && quiz.standardScale
                                     ? quiz.standardScale
@@ -228,29 +275,45 @@ function Scoreboard() {
                                             cursor: 'pointer', 
                                             userSelect: 'none', 
                                             '&:hover': { bgcolor: 'action.hover' },
-                                            p: 1,
-                                            overflow: 'hidden',
-                                            textOverflow: 'ellipsis'
+                                            p: 1.5,
+                                            minWidth: '120px',
+                                            bgcolor: 'background.paper'
                                         }}
                                     >
                                         <Box sx={{ 
                                             whiteSpace: 'nowrap',
-                                            overflow: 'hidden',
-                                            textOverflow: 'ellipsis',
-                                            fontSize: '0.875rem'
+                                            fontSize: '1rem',
+                                            fontWeight: 'bold'
                                         }}>
                                             {round.title} {sortColumn === `round-${round.id}` && (sortDirection === 'asc' ? '↑' : '↓')}
                                         </Box>
-                                        <Typography variant="caption" sx={{ fontSize: '0.7rem' }}>
+                                        <Typography variant="caption" sx={{ fontSize: '0.85rem' }}>
                                             (max: {formattedMax})
                                         </Typography>
                                     </TableCell>
                                 );
                             })}
+                            
+                            {/* Frozen right Total column */}
                             <TableCell 
-                                width="80px"
                                 onClick={() => handleSort('total')}
-                                sx={{ cursor: 'pointer', userSelect: 'none', '&:hover': { bgcolor: 'action.hover' }, whiteSpace: 'nowrap', p: 1 }}
+                                sx={{ 
+                                    cursor: 'pointer', 
+                                    userSelect: 'none', 
+                                    '&:hover': { bgcolor: 'action.hover' }, 
+                                    whiteSpace: 'nowrap', 
+                                    p: 1.5,
+                                    fontSize: '1rem',
+                                    fontWeight: 'bold',
+                                    position: 'sticky',
+                                    right: 0,
+                                    bgcolor: 'background.paper',
+                                    zIndex: 3,
+                                    minWidth: '120px',
+                                    borderLeft: '3px solid',
+                                    borderColor: 'divider',
+                                    boxShadow: '-3px 0 5px rgba(0,0,0,0.1)'
+                                }}
                             >
                                 Total {sortColumn === 'total' && (sortDirection === 'asc' ? '↑' : '↓')}
                             </TableCell>
@@ -264,32 +327,79 @@ function Scoreboard() {
                             
                             return (
                                 <TableRow key={teamQuiz.id}>
-                                    <TableCell sx={{ bgcolor: bgColor, p: 1 }}>
+                                    {/* Frozen left columns */}
+                                    <TableCell sx={{ 
+                                        position: 'sticky',
+                                        left: 0,
+                                        zIndex: 2,
+                                        borderRight: '2px solid',
+                                        borderColor: 'divider',
+                                        boxShadow: '3px 0 5px rgba(0,0,0,0.1)',
+                                        p: 1.5, 
+                                        fontSize: '1.1rem',
+                                        bgcolor: 'background.paper',
+                                        backgroundImage: bgColor !== 'transparent' ? `linear-gradient(${bgColor}, ${bgColor})` : 'none'
+                                    }}>
                                         <strong>{rank}</strong>
                                     </TableCell>
-                                    <TableCell sx={{ p: 1 }}>{teamQuiz.nr}</TableCell>
-                                    <TableCell sx={{ p: 1 }}>
+                                    <TableCell sx={{ 
+                                        p: 1.5, 
+                                        fontSize: '1.1rem',
+                                        position: 'sticky',
+                                        left: '80px',
+                                        bgcolor: 'background.paper',
+                                        zIndex: 2,
+                                        borderRight: '2px solid',
+                                        borderColor: 'divider'
+                                    }}>
+                                        {teamQuiz.nr}
+                                    </TableCell>
+                                    <TableCell sx={{ 
+                                        p: 1.5,
+                                        position: 'sticky',
+                                        left: '150px',
+                                        bgcolor: 'background.paper',
+                                        zIndex: 2,
+                                        borderRight: '3px solid',
+                                        borderColor: 'divider',
+                                        boxShadow: '3px 0 5px rgba(0,0,0,0.1)'
+                                    }}>
                                         <Typography sx={{ 
                                             fontWeight: 'bold',
                                             overflow: 'hidden',
                                             textOverflow: 'ellipsis',
-                                            whiteSpace: 'nowrap'
+                                            whiteSpace: 'nowrap',
+                                            fontSize: '1.1rem'
                                         }}>
                                             {teamQuiz.team.name}
                                         </Typography>
                                     </TableCell>
+                                    
+                                    {/* Scrollable round columns */}
                                     {sortedRounds.map((round) => {
                                         const score = teamScoresMap.get(`${teamQuiz.id}-${round.id}`) || 0;
                                         const formatted = quiz.scaleConversionEnabled && !round.excludeFromScale 
                                             ? score.toFixed(2) 
                                             : score.toString();
                                         return (
-                                            <TableCell key={round.id} sx={{ p: 1, textAlign: 'center' }}>
+                                            <TableCell key={round.id} sx={{ p: 1.5, textAlign: 'center', fontSize: '1.1rem' }}>
                                                 {formatted}
                                             </TableCell>
                                         );
                                     })}
-                                    <TableCell sx={{ p: 1 }}>
+                                    
+                                    {/* Frozen right Total column */}
+                                    <TableCell sx={{ 
+                                        p: 1.5, 
+                                        fontSize: '1.1rem',
+                                        position: 'sticky',
+                                        right: 0,
+                                        bgcolor: 'background.paper',
+                                        zIndex: 2,
+                                        borderLeft: '3px solid',
+                                        borderColor: 'divider',
+                                        boxShadow: '-3px 0 5px rgba(0,0,0,0.1)'
+                                    }}>
                                         <strong>
                                             {quiz.scaleConversionEnabled 
                                                 ? total.toFixed(2) 

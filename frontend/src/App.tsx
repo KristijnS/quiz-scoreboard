@@ -8,6 +8,7 @@ import { QuizProvider, useQuiz } from './context/QuizContext';
 // Lazy load route components for faster initial load and navigation
 const StartQuiz = lazy(() => import('./pages/StartQuiz'));
 const CreateQuiz = lazy(() => import('./pages/CreateQuiz'));
+const GenerateMockQuiz = lazy(() => import('./pages/GenerateMockQuiz'));
 const LoadQuiz = lazy(() => import('./pages/LoadQuiz'));
 const Scoreboard = lazy(() => import('./pages/Scoreboard'));
 const QuizManagement = lazy(() => import('./pages/QuizManagement'));
@@ -180,6 +181,16 @@ function AppContent({ darkMode, setDarkMode }: AppProps) {
               Create New Quiz
             </MenuItem>
             <MenuItem 
+              onClick={() => handleMenuNavigate('/generate-mock')}
+              sx={darkMode ? {
+                '&:hover': {
+                  bgcolor: 'rgba(144, 202, 249, 0.2)'
+                }
+              } : {}}
+            >
+              Generate Mock Quiz
+            </MenuItem>
+            <MenuItem 
               onClick={() => handleMenuNavigate('/load')}
               sx={darkMode ? {
                 '&:hover': {
@@ -277,6 +288,7 @@ function AppContent({ darkMode, setDarkMode }: AppProps) {
         <Routes>
           <Route path="/" element={<StartQuiz />} />
           <Route path="/create" element={<CreateQuiz />} />
+          <Route path="/generate-mock" element={<GenerateMockQuiz />} />
           <Route path="/load" element={<LoadQuiz />} />
           <Route path="/quiz/:id" element={<Scoreboard />} />
           <Route path="/quiz/:id/manage" element={<QuizManagement />} />

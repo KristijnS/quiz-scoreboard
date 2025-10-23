@@ -5,6 +5,7 @@ import quizRoutes from './routes/quiz.routes';
 import teamRoutes from './routes/team.routes';
 import roundRoutes from './routes/round.routes';
 import scoreRoutes from './routes/score.routes';
+import mockRoutes from './routes/mock.routes';
 
 const app = express();
 const port = 3000;
@@ -22,6 +23,7 @@ app.use('/api/quizzes', quizRoutes);
 app.use('/api/teams', teamRoutes);
 app.use('/api/rounds', roundRoutes);
 app.use('/api/scores', scoreRoutes);
+app.use('/api/mock', mockRoutes);
 
 AppDataSource.initialize().then(() => {
     console.log("Database initialized");

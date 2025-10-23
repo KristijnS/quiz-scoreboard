@@ -41,3 +41,8 @@ export const scoreApi = {
     update: (roundId: number, teamQuizId: number, points: number) => 
         axios.put<Score>(`${API_URL}/scores`, { roundId, teamQuizId, points }).then(res => res.data)
 };
+
+export const mockApi = {
+    generate: (teams: number, rounds: number, withScores: boolean, useStandardScale: boolean, standardScale: number) =>
+        axios.post<{ quizId: number; message: string }>(`${API_URL}/mock/generate`, { teams, rounds, withScores, useStandardScale, standardScale }).then(res => res.data)
+};

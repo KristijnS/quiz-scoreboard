@@ -1,4 +1,5 @@
 const { app, BrowserWindow, ipcMain } = require('electron');
+const { Menu } = require('electron');
 const path = require('path');
 const { spawn } = require('child_process');
 const serve = require('electron-serve');
@@ -138,6 +139,33 @@ app.whenReady().then(() => {
     // Wait for backend to be ready before creating window
     waitForBackend(() => {
         createWindow();
+        // Build a simple application menu with a Mock Quiz generator
+        const template = [
+            {
+                label: 'File',
+                submenu: [
+                    {
+                        label: 'Generate Mock Quiz',
+                        click: () => {
+                            if (mainWindow && mainWindow.webContents) {
+                                mainWindow.webContents.send('open-mock-quiz');
+                            }
+                        }
+                    },
+                    { role: 'quit' }
+                ]
+            },
+            {
+                label: 'View',
+                submenu: [
+                    { role: 'reload' },
+                    { role: 'toggledevtools' }
+                ]
+            }
+        ];
+
+        const menu = Menu.buildFromTemplate(template);
+        Menu.setApplicationMenu(menu);
     });
 
     app.on('activate', () => {
