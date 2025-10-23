@@ -71,6 +71,8 @@ Access the Top 5 page from the Quiz Management page via the new "Top 5" button.
 
 ### Quiz Management Workflow Improvements
 - **Smart Navigation**: After creating a new quiz, automatically opens Quiz Management page instead of Scoreboard
+  - Applies to both the dedicated "Create New Quiz" page and the quick create form on the Start Quiz (main) page
+  - Creates a more logical workflow for quiz setup
 - **Auto-Focus Input Fields**: After adding a team or round, the input field automatically refocuses for rapid data entry
   - Press Tab + Enter to quickly add multiple teams/rounds without mouse interaction
 - **Unsaved Changes Protection**: When editing a team or round, clicking cancel shows confirmation dialog if changes were made

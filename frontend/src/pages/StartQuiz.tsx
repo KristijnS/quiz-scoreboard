@@ -35,7 +35,7 @@ function StartQuiz() {
     const handleCreate = async () => {
         if (!quizName.trim()) return;
         const quiz = await quizApi.create(quizName);
-        navigate(`/quiz/${quiz.id}`);
+        navigate(`/quiz/${quiz.id}/manage`);
     };
 
     const formatDate = (dateStr: string) => {

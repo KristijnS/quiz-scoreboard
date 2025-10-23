@@ -439,7 +439,7 @@ function Top5() {
                                             variant="caption"
                                             sx={{
                                                 fontWeight: 'bold',
-                                                color: isDarkMode ? 'rgba(255, 255, 255, 0.5)' : 'rgba(0, 0, 0, 0.5)',
+                                                color: isDarkMode ? 'rgba(137, 189, 249, 0.69)' : 'rgba(21, 24, 85, 0.68)',
                                                 fontSize: '0.75rem',
                                                 textAlign: 'center'
                                             }}
@@ -452,7 +452,7 @@ function Top5() {
                                             variant="body2"
                                             sx={{
                                                 color: isDarkMode ? 'rgba(255, 255, 255, 0.87)' : 'rgba(0, 0, 0, 0.87)',
-                                                fontSize: '0.85rem',
+                                                fontSize: '1rem',
                                                 fontWeight: 'bold',
                                                 textAlign: 'center',
                                                 overflow: 'hidden',
