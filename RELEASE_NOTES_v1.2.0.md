@@ -69,6 +69,14 @@ Access the Top 5 page from the Quiz Management page via the new "Top 5" button.
   3. Chart (visualize data)
   4. Top 5 (presentation mode)
 
+### Quiz Management Workflow Improvements
+- **Smart Navigation**: After creating a new quiz, automatically opens Quiz Management page instead of Scoreboard
+- **Auto-Focus Input Fields**: After adding a team or round, the input field automatically refocuses for rapid data entry
+  - Press Tab + Enter to quickly add multiple teams/rounds without mouse interaction
+- **Unsaved Changes Protection**: When editing a team or round, clicking cancel shows confirmation dialog if changes were made
+  - Prevents accidental loss of modifications
+  - "Keep Editing" or "Discard Changes" options
+
 ## 🎨 Visual Enhancements
 
 - Trophy icon for 1st place with pulse animation
