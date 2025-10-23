@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, useCallback, memo } from 'react';
+import { useEffect, useState, useMemo, useCallback, memo, useRef } from 'react';
 import {
     Container,
     Typography,
@@ -37,16 +37,27 @@ function QuizManagement() {
     const [newRoundMaxScore, setNewRoundMaxScore] = useState('10');
     const [newRoundExcludeFromScale, setNewRoundExcludeFromScale] = useState(false);
     
+    // Refs for auto-focusing inputs after adding items
+    const newTeamInputRef = useRef<HTMLInputElement>(null);
+    const newRoundInputRef = useRef<HTMLInputElement>(null);
+    
     // Edit state for teams
     const [editingTeamId, setEditingTeamId] = useState<number | null>(null);
     const [editTeamName, setEditTeamName] = useState('');
     const [editTeamError, setEditTeamError] = useState<string | null>(null);
+    const [originalTeamName, setOriginalTeamName] = useState('');
     
     // Edit state for rounds
     const [editingRoundId, setEditingRoundId] = useState<number | null>(null);
     const [editRoundTitle, setEditRoundTitle] = useState('');
     const [editRoundMaxScore, setEditRoundMaxScore] = useState('');
     const [editRoundError, setEditRoundError] = useState<string | null>(null);
+    const [originalRoundTitle, setOriginalRoundTitle] = useState('');
+    const [originalRoundMaxScore, setOriginalRoundMaxScore] = useState('');
+    
+    // Unsaved changes confirmation state
+    const [unsavedChangesDialogOpen, setUnsavedChangesDialogOpen] = useState(false);
+    const [pendingAction, setPendingAction] = useState<(() => void) | null>(null);
     
     // Scale conversion state
     const [scaleConversionEnabled, setScaleConversionEnabled] = useState(false);
@@ -91,6 +102,8 @@ function QuizManagement() {
             await teamApi.addToQuiz(id, newTeamName);
             setNewTeamName('');
             loadQuiz();
+            // Refocus the input field after adding for faster entry
+            setTimeout(() => newTeamInputRef.current?.focus(), 100);
         } catch (error: any) {
             if (error.response?.data?.message) {
                 setTeamError(error.response.data.message);
@@ -151,6 +164,8 @@ function QuizManagement() {
             setNewRoundMaxScore('10');
             setNewRoundExcludeFromScale(false);
             loadQuiz();
+            // Refocus the input field after adding for faster entry
+            setTimeout(() => newRoundInputRef.current?.focus(), 100);
         } catch (error: any) {
             if (error.response?.data?.message) {
                 setRoundError(error.response.data.message);
@@ -235,14 +250,27 @@ function QuizManagement() {
     const handleStartEditTeam = useCallback((teamId: number, currentName: string) => {
         setEditingTeamId(teamId);
         setEditTeamName(currentName);
+        setOriginalTeamName(currentName);
         setEditTeamError(null);
     }, []);
 
     const handleCancelEditTeam = useCallback(() => {
-        setEditingTeamId(null);
-        setEditTeamName('');
-        setEditTeamError(null);
-    }, []);
+        // Check if there are unsaved changes
+        if (editTeamName !== originalTeamName) {
+            setPendingAction(() => () => {
+                setEditingTeamId(null);
+                setEditTeamName('');
+                setOriginalTeamName('');
+                setEditTeamError(null);
+            });
+            setUnsavedChangesDialogOpen(true);
+        } else {
+            setEditingTeamId(null);
+            setEditTeamName('');
+            setOriginalTeamName('');
+            setEditTeamError(null);
+        }
+    }, [editTeamName, originalTeamName]);
 
     const handleSaveTeam = useCallback(async (teamId: number) => {
         if (!id || !editTeamName.trim()) return;
@@ -265,15 +293,32 @@ function QuizManagement() {
         setEditingRoundId(roundId);
         setEditRoundTitle(currentTitle);
         setEditRoundMaxScore(currentMaxScore.toString());
+        setOriginalRoundTitle(currentTitle);
+        setOriginalRoundMaxScore(currentMaxScore.toString());
         setEditRoundError(null);
     }, []);
 
     const handleCancelEditRound = useCallback(() => {
-        setEditingRoundId(null);
-        setEditRoundTitle('');
-        setEditRoundMaxScore('');
-        setEditRoundError(null);
-    }, []);
+        // Check if there are unsaved changes
+        if (editRoundTitle !== originalRoundTitle || editRoundMaxScore !== originalRoundMaxScore) {
+            setPendingAction(() => () => {
+                setEditingRoundId(null);
+                setEditRoundTitle('');
+                setEditRoundMaxScore('');
+                setOriginalRoundTitle('');
+                setOriginalRoundMaxScore('');
+                setEditRoundError(null);
+            });
+            setUnsavedChangesDialogOpen(true);
+        } else {
+            setEditingRoundId(null);
+            setEditRoundTitle('');
+            setEditRoundMaxScore('');
+            setOriginalRoundTitle('');
+            setOriginalRoundMaxScore('');
+            setEditRoundError(null);
+        }
+    }, [editRoundTitle, originalRoundTitle, editRoundMaxScore, originalRoundMaxScore]);
 
     const handleSaveRound = useCallback(async (roundId: number) => {
         if (!editRoundTitle.trim()) return;
@@ -347,6 +392,19 @@ function QuizManagement() {
         setDeleteDialogOpen(false);
         setItemToDelete(null);
     }, [itemToDelete, handleDeleteTeam, handleDeleteRound]);
+
+    const handleDiscardChanges = useCallback(() => {
+        if (pendingAction) {
+            pendingAction();
+            setPendingAction(null);
+        }
+        setUnsavedChangesDialogOpen(false);
+    }, [pendingAction]);
+
+    const handleKeepEditing = useCallback(() => {
+        setPendingAction(null);
+        setUnsavedChangesDialogOpen(false);
+    }, []);
 
     if (!quiz) return null;
 
@@ -543,6 +601,7 @@ function QuizManagement() {
                                         <TableCell sx={{ width: '80px', maxWidth: '80px', padding: '8px 4px', whiteSpace: 'nowrap' }}></TableCell>
                                         <TableCell>
                                             <TextField
+                                                inputRef={newTeamInputRef}
                                                 size="small"
                                                 placeholder="New team name"
                                                 value={newTeamName}
@@ -749,6 +808,7 @@ function QuizManagement() {
                                         <TableCell>New</TableCell>
                                         <TableCell>
                                             <TextField
+                                                inputRef={newRoundInputRef}
                                                 size="small"
                                                 placeholder="Round title"
                                                 value={newRoundTitle}
@@ -835,6 +895,25 @@ function QuizManagement() {
                     <Button onClick={handleCloseDialog}>Cancel</Button>
                     <Button onClick={handleConfirmDelete} color="error" variant="contained">
                         Delete
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+            {/* Unsaved Changes Confirmation Dialog */}
+            <Dialog
+                open={unsavedChangesDialogOpen}
+                onClose={handleKeepEditing}
+            >
+                <DialogTitle>Unsaved Changes</DialogTitle>
+                <DialogContent>
+                    <DialogContentText>
+                        You have unsaved changes. Do you want to discard them?
+                    </DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={handleKeepEditing}>Keep Editing</Button>
+                    <Button onClick={handleDiscardChanges} color="warning" variant="contained">
+                        Discard Changes
                     </Button>
                 </DialogActions>
             </Dialog>
