@@ -62,6 +62,13 @@ Access the Top 5 page from the Quiz Management page via the new "Top 5" button.
 - **New Team Row**: Fixed alignment to match 4-column structure (Nr, Active, Team Name, Actions)
 - **Round Exclude Checkbox**: Enabled functional excludeFromScale checkbox for new rounds during creation
 
+### Navigation Menu Reordering
+- **Improved Workflow**: Reordered main navigation menu for logical flow:
+  1. Manage Score (score entry comes first)
+  2. Scoreboard (view results)
+  3. Chart (visualize data)
+  4. Top 5 (presentation mode)
+
 ## 🎨 Visual Enhancements
 
 - Trophy icon for 1st place with pulse animation
