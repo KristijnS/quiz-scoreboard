@@ -71,32 +71,6 @@ function AppContent({ darkMode, setDarkMode }: AppProps) {
             <Button
               color={darkMode ? 'primary' : 'inherit'}
               disabled={!quizId}
-              variant={isActive(`/quiz/${quizId}`) ? 'contained' : 'text'}
-              onClick={() => navigate(`/quiz/${quizId}`)}
-              sx={{
-                borderRadius: 0,
-                ...(isActive(`/quiz/${quizId}`) && darkMode && { 
-                  bgcolor: 'rgba(144, 202, 249, 0.2)',
-                  color: '#90caf9',
-                  boxShadow: 'none'
-                }),
-                ...(isActive(`/quiz/${quizId}`) && !darkMode && { 
-                  bgcolor: '#e3f2fd',
-                  color: '#1976d2',
-                  boxShadow: 'none'
-                }),
-                '&:hover': darkMode ? {
-                  bgcolor: 'rgba(144, 202, 249, 0.2)',
-                  color: '#90caf9'
-                } : {
-                  bgcolor: '#e3f2fd',
-                  color: '#1976d2'
-                }
-              }}
-            >Scoreboard</Button>
-            <Button
-              color={darkMode ? 'primary' : 'inherit'}
-              disabled={!quizId}
               variant={isActive(`/quiz/${quizId}/score`) ? 'contained' : 'text'}
               onClick={() => navigate(`/quiz/${quizId}/score`)}
               sx={{
@@ -120,6 +94,32 @@ function AppContent({ darkMode, setDarkMode }: AppProps) {
                 }
               }}
             >Manage Score</Button>
+            <Button
+              color={darkMode ? 'primary' : 'inherit'}
+              disabled={!quizId}
+              variant={isActive(`/quiz/${quizId}`) ? 'contained' : 'text'}
+              onClick={() => navigate(`/quiz/${quizId}`)}
+              sx={{
+                borderRadius: 0,
+                ...(isActive(`/quiz/${quizId}`) && darkMode && { 
+                  bgcolor: 'rgba(144, 202, 249, 0.2)',
+                  color: '#90caf9',
+                  boxShadow: 'none'
+                }),
+                ...(isActive(`/quiz/${quizId}`) && !darkMode && { 
+                  bgcolor: '#e3f2fd',
+                  color: '#1976d2',
+                  boxShadow: 'none'
+                }),
+                '&:hover': darkMode ? {
+                  bgcolor: 'rgba(144, 202, 249, 0.2)',
+                  color: '#90caf9'
+                } : {
+                  bgcolor: '#e3f2fd',
+                  color: '#1976d2'
+                }
+              }}
+            >Scoreboard</Button>
             <Button
               color={darkMode ? 'primary' : 'inherit'}
               disabled={!quizId}
