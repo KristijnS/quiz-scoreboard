@@ -70,3 +70,6 @@ coverage/
 
 # Electron specific
 electron/out/
+
+# Release names (private)
+.release-names/
