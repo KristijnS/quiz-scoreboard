@@ -10,6 +10,32 @@ Version 1.3.0 introduces a comprehensive **Ex Aequo (Tiebreaker)** system for ha
 
 ## ✨ New Features
 
+### 🎬 Leaderboard Page (NEW!)
+
+An entirely new presentation view for dramatic team reveal:
+
+#### Features
+- **Click-to-Reveal**: Click anywhere on screen to progressively reveal teams
+- **Bottom-to-Top Animation**: Teams are revealed from 5th place to 1st place
+- **Progressive Width Sizing**: 
+  - 1st place: 100% width (widest)
+  - 2nd place: 95% width
+  - 3rd place: 90% width
+  - 4th-5th place: 85% width
+  - 6th+ place: 78% width
+- **Trophy & Medal Icons**: 
+  - 🏆 Gold trophy for 1st place with pulse animation
+  - 🥈 Silver medal for 2nd place with pulse animation
+  - 🥉 Bronze medal for 3rd place with pulse animation
+- **Gradient Colors**: Gold, silver, bronze backgrounds for top 3 (when gradient enabled)
+- **Auto-scroll**: Automatically scrolls to bottom when revealing teams beyond top 5
+- **Smooth Animations**: Fade-in-up effect with scale hover interactions
+- **Dynamic Team Count**: Works perfectly with any number of teams (not just 5)
+- **Completion Message**: "All teams revealed! 🎉" when all teams are shown
+
+#### Use Case
+Perfect for live quiz events where you want to build suspense by revealing the final rankings one team at a time, starting from the bottom positions and working up to the winner.
+
 ### Ex Aequo Tiebreaker System
 
 A complete tiebreaker mechanism for handling tied scores:
@@ -49,10 +75,12 @@ A complete tiebreaker mechanism for handling tied scores:
 - **Database Schema**: Automatic migration support via TypeORM
 
 ### Frontend Changes
+- **New Leaderboard Page**: Created complete `Leaderboard.tsx` component with click-to-reveal functionality
 - **Type Definitions**: Extended Quiz and Round interfaces with Ex Aequo properties
 - **State Management**: Quiz context automatically refreshes on page navigation
 - **API Integration**: Updated service layer to handle Ex Aequo settings
 - **Sorting Logic**: Implemented two-tier sorting (total score → tiebreaker proximity)
+- **Routing**: Added `/leaderboard` route in App.tsx navigation
 
 ### UI/UX Enhancements
 - **Consistent Icons**: Used Material-UI BalanceIcon for tiebreaker identification
@@ -92,14 +120,25 @@ A complete tiebreaker mechanism for handling tied scores:
 - `frontend/src/context/QuizContext.tsx` - Navigation-based refresh
 - `frontend/src/pages/QuizManagement.tsx` - Complete Ex Aequo UI and logic
 - `frontend/src/pages/Scoreboard.tsx` - Ranking with tiebreaker
-- `frontend/src/pages/Leaderboard.tsx` - Animated reveal with tiebreaker
+- `frontend/src/pages/Leaderboard.tsx` - **NEW FILE** - Click-to-reveal animated leaderboard
 - `frontend/src/pages/Top5.tsx` - Progressive reveal with tiebreaker
 - `frontend/src/pages/ChartView.tsx` - Chart rankings with tiebreaker
-- `frontend/src/App.tsx` - Button styling fixes
+- `frontend/src/App.tsx` - Leaderboard navigation and button styling fixes
 
 ---
 
 ## 🎮 Usage Guide
+
+### Using the Leaderboard Page
+
+1. **Navigate to Leaderboard**: Click the "Leaderboard" button in the main navigation
+2. **Click to Reveal**: Click anywhere on the screen to reveal the next team
+3. **Reveal Order**: Teams appear from bottom to top (5th → 4th → 3rd → 2nd → 1st)
+4. **Auto-scroll**: For more than 5 teams, the page automatically scrolls to show new teams
+5. **Watch Animations**: Enjoy the fade-in and pulse effects on trophy/medal icons
+6. **Completion**: When all teams are revealed, a celebration message appears
+
+**Pro Tip**: Use Leaderboard mode for live quiz events to build suspense. Use Scoreboard mode for quick reference during the quiz.
 
 ### Setting Up Ex Aequo
 
@@ -182,6 +221,8 @@ A complete tiebreaker mechanism for handling tied scores:
 - Multiple Ex Aequo rounds support
 - Custom tiebreaker rules (percentage-based, time-based)
 - Export quiz results with tiebreaker details
+- Leaderboard customization options (animation speed, reveal order)
+- Full-screen presentation mode
 
 ---
 
@@ -194,6 +235,14 @@ Thank you to all users who requested the tiebreaker feature and provided feedbac
 ## 📝 Full Changelog
 
 ```
+feat: Add Leaderboard page with click-to-reveal animation
+  - New page at /leaderboard route
+  - Progressive reveal from bottom to top (5th → 1st)
+  - Trophy and medal icons with pulse animations
+  - Progressive width sizing (1st widest, decreasing to 6th+)
+  - Auto-scroll for teams beyond top 5
+  - Works with any number of teams
+
 feat: Add Ex Aequo tiebreaker system
   - Quiz Management: Ex Aequo checkbox and target value input
   - Round Management: Locked last position for Ex Aequo round
