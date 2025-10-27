@@ -71,6 +71,28 @@ export class Quiz {
     gradientEnabled!: boolean;
 
     /**
+     * Ex Aequo Tiebreaker Feature
+     * 
+     * When enabled, adds a special "Ex Aequo" round for tiebreaking
+     * Teams with equal total scores are ranked by closest answer to exAequoValue
+     * 
+     * Default: false (disabled)
+     */
+    @Column({ default: false })
+    exAequoEnabled!: boolean;
+
+    /**
+     * Ex Aequo Target Value
+     * 
+     * The correct/target value for the tiebreaker question
+     * Used to rank teams with equal scores by closest answer
+     * 
+     * Optional: null when exAequoEnabled=false
+     */
+    @Column({ type: 'float', nullable: true })
+    exAequoValue?: number;
+
+    /**
      * Quiz creation timestamp
      * Automatically set by TypeORM when quiz is created
      * Used for: Sorting quizzes by date, displaying quiz history

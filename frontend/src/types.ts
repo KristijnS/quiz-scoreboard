@@ -5,6 +5,8 @@ export interface Quiz {
     scaleConversionEnabled: boolean;
     standardScale?: number;
     gradientEnabled: boolean;
+    exAequoEnabled: boolean;
+    exAequoValue?: number;
     rounds: Round[];
     teamQuizzes: TeamQuiz[];
 }
@@ -15,6 +17,7 @@ export interface Round {
     nr: number;
     maxScore: number;
     excludeFromScale: boolean;
+    isExAequo: boolean;
     scores: Score[];
 }
 
@@ -33,9 +36,11 @@ export interface TeamQuiz {
 
 export interface CreateRoundData {
     title: string;
-    nr: number;
+    nr?: number;
     maxScore: number;
-    quizId: number;
+    quizId: number | string;
+    excludeFromScale?: boolean;
+    isExAequo?: boolean;
 }
 
 export interface Score {

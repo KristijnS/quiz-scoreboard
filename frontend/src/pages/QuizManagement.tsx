@@ -23,7 +23,7 @@ import {
     DialogActions,
     Button
 } from '@mui/material';
-import { Add as AddIcon, Delete as DeleteIcon, ArrowUpward, ArrowDownward, Edit as EditIcon, Check as CheckIcon, Close as CloseIcon, Gradient as GradientIcon, Transform as TransformIcon } from '@mui/icons-material';
+import { Add as AddIcon, Delete as DeleteIcon, ArrowUpward, ArrowDownward, Edit as EditIcon, Check as CheckIcon, Close as CloseIcon, Gradient as GradientIcon, Transform as TransformIcon, Balance as BalanceIcon } from '@mui/icons-material';
 import { CreateRoundData } from '../types';
 import { quizApi, teamApi, roundApi } from '../services/api';
 import { useQuiz } from '../context/QuizContext';
@@ -64,6 +64,10 @@ function QuizManagement() {
     const [standardScale, setStandardScale] = useState('100');
     const [gradientEnabled, setGradientEnabled] = useState(true);
 
+    // Ex Aequo tiebreaker state
+    const [exAequoEnabled, setExAequoEnabled] = useState(false);
+    const [exAequoValue, setExAequoValue] = useState('');
+
     // Delete confirmation state
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [itemToDelete, setItemToDelete] = useState<{ type: 'team' | 'round'; id: number; name: string; hasDependencies: boolean; dependencyCount?: number } | null>(null);
@@ -74,6 +78,8 @@ function QuizManagement() {
         setScaleConversionEnabled(quiz.scaleConversionEnabled || false);
         setStandardScale(quiz.standardScale?.toString() || '100');
         setGradientEnabled(quiz.gradientEnabled !== undefined ? quiz.gradientEnabled : true);
+        setExAequoEnabled(quiz.exAequoEnabled || false);
+        setExAequoValue(quiz.exAequoValue?.toString() || '');
     }, [quiz]);
 
     // Replace loadQuiz with refreshQuiz from context
@@ -90,9 +96,13 @@ function QuizManagement() {
     }, [quiz]);
 
     // Memoize sorted rounds to avoid sorting on every render
+    // Ex Aequo round always appears last
     const sortedRounds = useMemo(() => {
         if (!quiz) return [];
-        return [...quiz.rounds].sort((a, b) => a.nr - b.nr);
+        const rounds = [...quiz.rounds];
+        const exAequoRound = rounds.find(r => r.isExAequo === true);
+        const normalRounds = rounds.filter(r => r.isExAequo !== true).sort((a, b) => a.nr - b.nr);
+        return exAequoRound ? [...normalRounds, exAequoRound] : normalRounds;
     }, [quiz]);
 
     const handleAddTeam = useCallback(async () => {
@@ -150,7 +160,10 @@ function QuizManagement() {
         try {
             setRoundError(null);
             const maxScore = parseInt(newRoundMaxScore, 10) || 10;
-            const nextNr = quiz?.rounds.length ? Math.max(...quiz.rounds.map(r => r.nr)) + 1 : 1;
+            
+            // Calculate nextNr, excluding Ex Aequo round
+            const normalRounds = quiz?.rounds.filter(r => r.isExAequo !== true) || [];
+            const nextNr = normalRounds.length ? Math.max(...normalRounds.map(r => r.nr)) + 1 : 1;
             
             await roundApi.create({
                 title: newRoundTitle,
@@ -206,6 +219,15 @@ function QuizManagement() {
         const rounds = sortedRounds;
         const index = rounds.findIndex(r => r.id === roundId);
         if (index === -1) return;
+        
+        // Prevent moving Ex Aequo round
+        if (rounds[index].isExAequo === true) return;
+        
+        // Prevent moving rounds past Ex Aequo (Ex Aequo is always last)
+        const targetIndex = direction === 'up' ? index - 1 : index + 1;
+        if (targetIndex >= 0 && targetIndex < rounds.length && rounds[targetIndex].isExAequo === true) {
+            return;
+        }
         
         if (direction === 'up' && index > 0) {
             const temp = rounds[index].nr;
@@ -375,6 +397,52 @@ function QuizManagement() {
         loadQuiz();
     }, [id, loadQuiz]);
 
+    const handleExAequoEnabledChange = useCallback(async (enabled: boolean) => {
+        if (!id) return;
+        setExAequoEnabled(enabled);
+        
+        try {
+            // Update quiz with new exAequoEnabled value
+            await quizApi.update(id, { exAequoEnabled: enabled });
+            
+            // If enabling, create the Ex Aequo round
+            if (enabled) {
+                const nextNr = quiz?.rounds.length ? Math.max(...quiz.rounds.map(r => r.nr)) + 1 : 1;
+                console.log('Creating Ex Aequo round with nr:', nextNr);
+                await roundApi.create({
+                    quizId: id,
+                    title: 'Ex Aequo',
+                    nr: nextNr,
+                    maxScore: 999999,
+                    excludeFromScale: true,
+                    isExAequo: true
+                } as CreateRoundData);
+            } else {
+                // If disabling, delete the Ex Aequo round
+                const exAequoRound = quiz?.rounds.find(r => r.isExAequo);
+                if (exAequoRound) {
+                    console.log('Deleting Ex Aequo round:', exAequoRound.id);
+                    await roundApi.delete(exAequoRound.id);
+                }
+            }
+            
+            await loadQuiz();
+        } catch (error) {
+            console.error('Error handling Ex Aequo change:', error);
+        }
+    }, [id, quiz, loadQuiz]);
+
+    const handleExAequoValueChange = useCallback(async (value: string) => {
+        if (!id) return;
+        setExAequoValue(value);
+        
+        const numValue = parseFloat(value);
+        if (!isNaN(numValue)) {
+            await quizApi.update(id, { exAequoValue: numValue });
+            loadQuiz();
+        }
+    }, [id, loadQuiz]);
+
     const handleCloseDialog = useCallback(() => {
         setDeleteDialogOpen(false);
         setItemToDelete(null);
@@ -443,6 +511,26 @@ function QuizManagement() {
                                 checked={gradientEnabled}
                                 onChange={(e) => handleGradientChange(e.target.checked)}
                             />
+                        </Box>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Tooltip title="Enable Ex Aequo tiebreaker question for ranking teams with equal scores">
+                                <BalanceIcon sx={{ fontSize: 20, cursor: 'help' }} />
+                            </Tooltip>
+                            <Checkbox
+                                checked={exAequoEnabled}
+                                onChange={(e) => handleExAequoEnabledChange(e.target.checked)}
+                            />
+                            {exAequoEnabled && (
+                                <TextField
+                                    label="Target Value"
+                                    type="number"
+                                    size="small"
+                                    value={exAequoValue}
+                                    onChange={(e) => setExAequoValue(e.target.value)}
+                                    onBlur={(e) => handleExAequoValueChange(e.target.value)}
+                                    sx={{ width: 150 }}
+                                />
+                            )}
                         </Box>
                     </Box>
                 </Paper>
@@ -737,6 +825,7 @@ function QuizManagement() {
                                                         <>
                                                             <IconButton
                                                                 onClick={() => handleStartEditRound(round.id, round.title, round.maxScore)}
+                                                                disabled={round.isExAequo === true}
                                                                 sx={{
                                                                     color: theme.palette.mode === 'dark' ? '#3a79adff' : 'primary.main',
                                                                     '&:hover': {
@@ -750,7 +839,11 @@ function QuizManagement() {
                                                             </IconButton>
                                                             <IconButton
                                                                 onClick={() => handleMoveRound(round.id, 'up')}
-                                                                disabled={index === 0}
+                                                                disabled={
+                                                                    index === 0 || 
+                                                                    round.isExAequo === true || 
+                                                                    (index > 0 && sortedRounds[index - 1]?.isExAequo === true)
+                                                                }
                                                                 sx={{
                                                                     color: theme.palette.mode === 'dark' ? '#3a79adff' : 'primary.main',
                                                                     '&:hover': {
@@ -764,7 +857,11 @@ function QuizManagement() {
                                                             </IconButton>
                                                             <IconButton
                                                                 onClick={() => handleMoveRound(round.id, 'down')}
-                                                                disabled={index === sortedRounds.length - 1}
+                                                                disabled={
+                                                                    index === sortedRounds.length - 1 || 
+                                                                    round.isExAequo === true || 
+                                                                    (index < sortedRounds.length - 1 && sortedRounds[index + 1]?.isExAequo === true)
+                                                                }
                                                                 sx={{
                                                                     color: theme.palette.mode === 'dark' ? '#3a79adff' : 'primary.main',
                                                                     '&:hover': {

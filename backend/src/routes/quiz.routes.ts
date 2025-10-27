@@ -105,6 +105,17 @@ router.put('/:id', async (req, res) => {
         if (req.body.gradientEnabled !== undefined) {
             quiz.gradientEnabled = !!req.body.gradientEnabled;
         }
+        if (req.body.exAequoEnabled !== undefined) {
+            quiz.exAequoEnabled = !!req.body.exAequoEnabled;
+        }
+        if (req.body.exAequoValue !== undefined) {
+            const value = parseFloat(req.body.exAequoValue);
+            if (!isNaN(value)) {
+                quiz.exAequoValue = value;
+            } else {
+                quiz.exAequoValue = undefined;
+            }
+        }
         
         await quizRepository.save(quiz);
         return res.json(quiz);

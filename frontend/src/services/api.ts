@@ -7,7 +7,7 @@ export const quizApi = {
     getAll: () => axios.get<Quiz[]>(`${API_URL}/quizzes`).then(res => res.data),
     get: (id: number) => axios.get<Quiz>(`${API_URL}/quizzes/${id}`).then(res => res.data),
     create: (name: string) => axios.post<Quiz>(`${API_URL}/quizzes`, { name }).then(res => res.data),
-    update: (id: number, data: { scaleConversionEnabled?: boolean; standardScale?: number; gradientEnabled?: boolean }) =>
+    update: (id: number, data: { scaleConversionEnabled?: boolean; standardScale?: number; gradientEnabled?: boolean; exAequoEnabled?: boolean; exAequoValue?: number }) =>
         axios.put<Quiz>(`${API_URL}/quizzes/${id}`, data).then(res => res.data),
     delete: (id: number) => axios.delete(`${API_URL}/quizzes/${id}`)
 };

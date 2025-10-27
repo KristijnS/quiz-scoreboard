@@ -45,6 +45,7 @@ router.post('/', async (req, res) => {
         nr,
         maxScore,
         excludeFromScale: req.body.excludeFromScale || false,
+        isExAequo: req.body.isExAequo || false,
         quiz
     });
     

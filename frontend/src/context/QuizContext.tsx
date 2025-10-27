@@ -60,6 +60,13 @@ export function QuizProvider({ children }: { children: ReactNode }) {
         loadQuiz();
     }, [loadQuiz]);
 
+    // Refresh quiz data when navigating to different pages within the same quiz
+    useEffect(() => {
+        if (id) {
+            loadQuiz();
+        }
+    }, [location.pathname, id]); // Re-fetch when pathname changes
+
     const refreshQuiz = useCallback(async () => {
         await loadQuiz();
     }, [loadQuiz]);

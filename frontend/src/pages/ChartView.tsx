@@ -38,7 +38,7 @@ ChartJS.register(
 
     if (!quiz) return <div>Loading...</div>;
 
-        // Pre-calculate all team totals
+        // Pre-calculate all team totals (excluding Ex Aequo)
         const teamTotals = useMemo(() => {
             if (!quiz.rounds || quiz.rounds.length === 0) return [];
             
@@ -52,22 +52,40 @@ ChartJS.register(
                     });
                 }
                 
-                const total = quiz.rounds.reduce((sum, round) => {
-                    const pts = scoreMap.get(round.id) ?? 0;
-                    const converted = quiz.scaleConversionEnabled && !round.excludeFromScale && quiz.standardScale && round.maxScore
-                        ? (pts / round.maxScore) * quiz.standardScale
-                        : pts;
-                    return sum + converted;
-                }, 0);
+                // Calculate total excluding Ex Aequo rounds
+                const total = quiz.rounds
+                    .filter(round => round.isExAequo !== true)
+                    .reduce((sum, round) => {
+                        const pts = scoreMap.get(round.id) ?? 0;
+                        const converted = quiz.scaleConversionEnabled && !round.excludeFromScale && quiz.standardScale && round.maxScore
+                            ? (pts / round.maxScore) * quiz.standardScale
+                            : pts;
+                        return sum + converted;
+                    }, 0);
                 
-                return { teamQuiz, total };
+                // Get Ex Aequo score for tiebreaking
+                const exAequoRound = quiz.rounds.find(r => r.isExAequo === true);
+                const exAequoScore = exAequoRound ? (scoreMap.get(exAequoRound.id) ?? 0) : 0;
+                
+                return { teamQuiz, total, exAequoScore };
             });
         }, [quiz]);
 
-        // Sort teams by total score (highest to lowest) - memoized
+        // Sort teams by total score with Ex Aequo tiebreaker (highest to lowest) - memoized
         const sortedTeams = useMemo(() => {
-            return [...teamTotals].sort((a, b) => b.total - a.total);
-        }, [teamTotals]);
+            return [...teamTotals].sort((a, b) => {
+                if (a.total !== b.total) return b.total - a.total;
+                
+                // Tiebreaker: closest to Ex Aequo target value wins
+                if (quiz.exAequoEnabled && quiz.exAequoValue !== undefined) {
+                    const aDiff = Math.abs(a.exAequoScore - quiz.exAequoValue);
+                    const bDiff = Math.abs(b.exAequoScore - quiz.exAequoValue);
+                    return aDiff - bDiff;
+                }
+                
+                return 0;
+            });
+        }, [teamTotals, quiz]);
 
         // Memoize gradient color calculation
         const getGradientColor = useCallback((index: number, opacity: number = 0.8) => {
@@ -94,16 +112,18 @@ ChartJS.register(
             return `rgba(${r}, ${g}, ${b}, ${opacity})`;
         }, [quiz, sortedTeams.length, isDarkMode]);
 
-        // Pre-calculate max score - memoized
+        // Pre-calculate max score (excluding Ex Aequo) - memoized
         const maxScore = useMemo(() => {
+            const nonExAequoRounds = quiz.rounds.filter(r => r.isExAequo !== true);
+            
             if (quiz.scaleConversionEnabled && quiz.standardScale) {
-                const includedCount = quiz.rounds.filter(r => !r.excludeFromScale).length;
-                const excludedRoundsMax = quiz.rounds
+                const includedCount = nonExAequoRounds.filter(r => !r.excludeFromScale).length;
+                const excludedRoundsMax = nonExAequoRounds
                     .filter(r => r.excludeFromScale)
                     .reduce((sum, round) => sum + round.maxScore, 0);
                 return (includedCount * quiz.standardScale) + excludedRoundsMax;
             }
-            return quiz.rounds?.reduce((sum: number, round: { maxScore: number }) => sum + (round?.maxScore || 0), 0) || 0;
+            return nonExAequoRounds?.reduce((sum: number, round: { maxScore: number }) => sum + (round?.maxScore || 0), 0) || 0;
         }, [quiz]);
 
         // Calculate responsive font sizes - memoized

@@ -23,7 +23,7 @@ function Scoreboard() {
         return [...quiz.rounds].sort((a, b) => a.nr - b.nr);
     }, [quiz]);
 
-    // Pre-calculate all totals once
+    // Pre-calculate all totals once (excluding Ex Aequo)
     const teamTotalsMap = useMemo(() => {
         if (!quiz) return new Map<number, number>();
         const map = new Map<number, number>();
@@ -31,7 +31,7 @@ function Scoreboard() {
         quiz.teamQuizzes.filter(tq => !tq.excluded).forEach(teamQuiz => {
             const total = teamQuiz.scores.reduce((sum, score) => {
                 const round = quiz.rounds.find(r => r.id === score.round.id);
-                if (!round) return sum;
+                if (!round || round.isExAequo === true) return sum; // Exclude Ex Aequo rounds from total
                 
                 if (!quiz.scaleConversionEnabled || round.excludeFromScale || !quiz.standardScale) {
                     return sum + score.points;
@@ -45,14 +45,42 @@ function Scoreboard() {
         return map;
     }, [quiz]);
 
-    // Pre-calculate all ranks once
+    // Get Ex Aequo scores for tiebreaking
+    const teamExAequoMap = useMemo(() => {
+        if (!quiz || !quiz.exAequoEnabled) return new Map<number, number>();
+        const map = new Map<number, number>();
+        
+        const exAequoRound = quiz.rounds.find(r => r.isExAequo === true);
+        if (!exAequoRound) return map;
+        
+        quiz.teamQuizzes.filter(tq => !tq.excluded).forEach(teamQuiz => {
+            const exAequoScore = teamQuiz.scores.find(s => s.round.id === exAequoRound.id);
+            map.set(teamQuiz.id, exAequoScore?.points ?? 0);
+        });
+        
+        return map;
+    }, [quiz]);
+
+    // Pre-calculate all ranks once (with Ex Aequo tiebreaking)
     const teamRanksMap = useMemo(() => {
         if (!quiz) return new Map<number, number>();
         
         const sortedByTotal = [...quiz.teamQuizzes].filter(tq => !tq.excluded).sort((a, b) => {
             const totalA = teamTotalsMap.get(a.id) || 0;
             const totalB = teamTotalsMap.get(b.id) || 0;
-            return totalB - totalA;
+            
+            if (totalA !== totalB) return totalB - totalA;
+            
+            // Tiebreaker: Ex Aequo closest to target
+            if (quiz.exAequoEnabled && quiz.exAequoValue !== undefined) {
+                const exAequoA = teamExAequoMap.get(a.id) ?? 0;
+                const exAequoB = teamExAequoMap.get(b.id) ?? 0;
+                const diffA = Math.abs(exAequoA - quiz.exAequoValue);
+                const diffB = Math.abs(exAequoB - quiz.exAequoValue);
+                return diffA - diffB;
+            }
+            
+            return 0;
         });
         
         const map = new Map<number, number>();
@@ -61,7 +89,7 @@ function Scoreboard() {
         });
         
         return map;
-    }, [quiz, teamTotalsMap]);
+    }, [quiz, teamTotalsMap, teamExAequoMap]);
 
     // Pre-calculate all scores for all teams and rounds
     const teamScoresMap = useMemo(() => {

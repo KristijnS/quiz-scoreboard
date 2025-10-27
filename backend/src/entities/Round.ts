@@ -82,6 +82,19 @@ export class Round {
     excludeFromScale!: boolean;
 
     /**
+     * Ex Aequo Tiebreaker Round Flag
+     * 
+     * When true: This is the special "Ex Aequo" tiebreaker round
+     * - Does NOT count toward total score
+     * - Used ONLY for breaking ties between teams with equal scores
+     * - Only one Ex Aequo round per quiz
+     * 
+     * Default: false (normal round that counts toward total)
+     */
+    @Column({ default: false })
+    isExAequo!: boolean;
+
+    /**
      * Parent quiz reference
      * Many rounds belong to one quiz
      * 

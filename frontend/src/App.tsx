@@ -15,6 +15,7 @@ const QuizManagement = lazy(() => import('./pages/QuizManagement'));
 const AddScore = lazy(() => import('./pages/AddScore'));
 const ChartView = lazy(() => import('./pages/ChartView'));
 const Top5 = lazy(() => import('./pages/Top5'));
+const Leaderboard = lazy(() => import('./pages/Leaderboard'));
 
 interface AppProps {
   darkMode: boolean;
@@ -172,6 +173,32 @@ function AppContent({ darkMode, setDarkMode }: AppProps) {
                 }
               }}
             >Top 5</Button>
+            <Button
+              color={darkMode ? 'primary' : 'inherit'}
+              disabled={!quizId}
+              variant={isActive(`/quiz/${quizId}/leaderboard`) ? 'contained' : 'text'}
+              onClick={() => navigate(`/quiz/${quizId}/leaderboard`)}
+              sx={{
+                borderRadius: 0,
+                ...(isActive(`/quiz/${quizId}/leaderboard`) && darkMode && { 
+                  bgcolor: 'rgba(144, 202, 249, 0.2)',
+                  color: '#90caf9',
+                  boxShadow: 'none'
+                }),
+                ...(isActive(`/quiz/${quizId}/leaderboard`) && !darkMode && { 
+                  bgcolor: '#e3f2fd',
+                  color: '#1976d2',
+                  boxShadow: 'none'
+                }),
+                '&:hover': darkMode ? {
+                  bgcolor: 'rgba(144, 202, 249, 0.2)',
+                  color: '#90caf9'
+                } : {
+                  bgcolor: '#e3f2fd',
+                  color: '#1976d2'
+                }
+              }}
+            >Leaderboard</Button>
           </Box>
           <Box sx={{ flexGrow: 1 }} />
           {location.pathname === `/quiz/${quizId}/chart` && (
@@ -329,6 +356,7 @@ function AppContent({ darkMode, setDarkMode }: AppProps) {
           <Route path="/quiz/:id/score" element={<AddScore />} />
           <Route path="/quiz/:id/chart" element={<ChartView />} />
           <Route path="/quiz/:id/top5" element={<Top5 />} />
+          <Route path="/quiz/:id/leaderboard" element={<Leaderboard />} />
         </Routes>
       </Suspense>
     </Box>

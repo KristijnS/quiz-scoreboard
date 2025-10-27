@@ -1,5 +1,5 @@
 import { Container, Typography, Box, Paper, useTheme, Fade } from '@mui/material';
-import { EmojiEvents as TrophyIcon, WorkspacePremium as MedalIcon, Cake as CandleIcon } from '@mui/icons-material';
+import { EmojiEvents as TrophyIcon, WorkspacePremium as MedalIcon } from '@mui/icons-material';
 import { useQuiz } from '../context/QuizContext';
 import { useMemo, useState, useCallback } from 'react';
 
@@ -23,31 +23,49 @@ function Top5() {
                 });
             }
             
-            const total = quiz.rounds.reduce((sum, round) => {
-                const pts = scoreMap.get(round.id) ?? 0;
-                const converted = quiz.scaleConversionEnabled && !round.excludeFromScale && quiz.standardScale && round.maxScore
-                    ? (pts / round.maxScore) * quiz.standardScale
-                    : pts;
-                return sum + converted;
-            }, 0);
+            // Calculate total excluding Ex Aequo rounds
+            const total = quiz.rounds
+                .filter(round => round.isExAequo !== true)
+                .reduce((sum, round) => {
+                    const pts = scoreMap.get(round.id) ?? 0;
+                    const converted = quiz.scaleConversionEnabled && !round.excludeFromScale && quiz.standardScale && round.maxScore
+                        ? (pts / round.maxScore) * quiz.standardScale
+                        : pts;
+                    return sum + converted;
+                }, 0);
             
-            return { teamQuiz, total };
+            // Get Ex Aequo score for tiebreaking
+            const exAequoRound = quiz.rounds.find(r => r.isExAequo === true);
+            const exAequoScore = exAequoRound ? (scoreMap.get(exAequoRound.id) ?? 0) : 0;
+            
+            return { teamQuiz, total, exAequoScore };
         });
         
-        // Sort by total score (highest to lowest)
-        return teamTotals.sort((a, b) => b.total - a.total);
+        // Sort by total score, then by Ex Aequo tiebreaker if enabled
+        return teamTotals.sort((a, b) => {
+            if (a.total !== b.total) return b.total - a.total;
+            
+            // Tiebreaker: closest to Ex Aequo target value wins
+            if (quiz.exAequoEnabled && quiz.exAequoValue !== undefined) {
+                const aDiff = Math.abs(a.exAequoScore - quiz.exAequoValue);
+                const bDiff = Math.abs(b.exAequoScore - quiz.exAequoValue);
+                return aDiff - bDiff;
+            }
+            
+            return 0;
+        });
     }, [quiz]);
 
-    const top5Teams = useMemo(() => allTeamsSorted.slice(0, 5), [allTeamsSorted]);
-    const remainingTeams = useMemo(() => allTeamsSorted.slice(5), [allTeamsSorted]);
-    const lastTeam = useMemo(() => allTeamsSorted.length > 0 ? allTeamsSorted[allTeamsSorted.length - 1] : null, [allTeamsSorted]);
+    const top5Teams = useMemo(() => allTeamsSorted.slice(0, Math.min(5, allTeamsSorted.length)), [allTeamsSorted]);
+    const remainingTeams = useMemo(() => allTeamsSorted.slice(Math.min(5, allTeamsSorted.length)), [allTeamsSorted]);
 
     // Handle click to reveal next team (from bottom to top, then remaining teams)
     const handleRevealNext = useCallback(() => {
-        if (revealedCount < 6) {
+        const maxReveal = Math.min(6, top5Teams.length + 1);
+        if (revealedCount < maxReveal) {
             setRevealedCount(prev => prev + 1);
         }
-    }, [revealedCount]);
+    }, [revealedCount, top5Teams.length]);
 
     if (!quiz) return <div>Loading...</div>;
 
@@ -112,7 +130,7 @@ function Top5() {
                     Top 5 Teams
                 </Typography>
                 
-                {revealedCount < 5 && (
+                {revealedCount < top5Teams.length && (
                     <Typography 
                         variant="h6" 
                         align="center" 
@@ -138,8 +156,8 @@ function Top5() {
                     {top5Teams.map((team, index) => {
                     const color = getColorForPosition(index);
                     const isWinner = index === 0;
-                    // Show teams from bottom to top: 5th (index 4) reveals first, then 4th, 3rd, 2nd, 1st
-                    const positionFromBottom = 4 - index; // 4, 3, 2, 1, 0
+                    // Show teams from bottom to top: last team reveals first, then up to first
+                    const positionFromBottom = top5Teams.length - 1 - index;
                     const isRevealed = revealedCount > positionFromBottom;
                     
                     // Determine card size based on position
@@ -213,7 +231,7 @@ function Top5() {
                                 <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                                     <Typography
                                         sx={{
-                                            fontSize: index === 0 ? '1.1rem' : (index === 1 ? '1.05rem' : (index === 2 ? '1rem' : '0.9rem')),
+                                            fontSize: '2rem',
                                             fontWeight: 'bold',
                                             color: isDarkMode ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)',
                                             textAlign: 'center',
@@ -224,7 +242,7 @@ function Top5() {
                                     </Typography>
                                     <Typography
                                         sx={{
-                                            fontSize: index === 0 ? '2.5rem' : (index === 1 ? '2.2rem' : (index === 2 ? '1.85rem' : '1.5rem')),
+                                            fontSize: '2rem',
                                             fontWeight: 'bold',
                                             color: color,
                                             textAlign: 'center',
@@ -237,7 +255,7 @@ function Top5() {
                                 
                                 <Typography
                                     sx={{
-                                        fontSize: index === 0 ? '1.3rem' : (index === 1 ? '1.22rem' : (index === 2 ? '1.1rem' : '0.95rem')),
+                                        fontSize: '2rem',
                                         fontWeight: 'bold',
                                         color: isDarkMode ? 'rgba(255, 255, 255, 0.87)' : 'rgba(0, 0, 0, 0.87)',
                                         textAlign: 'center',
@@ -252,7 +270,7 @@ function Top5() {
                                 
                                 <Typography
                                     sx={{
-                                        fontSize: index === 0 ? '1.1rem' : (index === 1 ? '1.05rem' : (index === 2 ? '0.97rem' : '0.85rem')),
+                                        fontSize: '1.5rem',
                                         fontWeight: 'bold',
                                         color: color,
                                         textAlign: 'center'
@@ -268,7 +286,7 @@ function Top5() {
                 })}
                 
                 {/* Last Place Team - Revealed on final click */}
-                {lastTeam && allTeamsSorted.length > 5 && (
+                {/*lastTeam && allTeamsSorted.length > 5 && (
                     <Fade 
                         in={revealedCount === 6} 
                         timeout={1000}
@@ -325,6 +343,7 @@ function Top5() {
                                     <Typography
                                         variant="h6"
                                         sx={{
+                                            fontSize: '2rem',
                                             fontWeight: 'bold',
                                             color: isDarkMode ? '#ef9a9a' : '#c62828',
                                             textAlign: 'center'
@@ -336,7 +355,7 @@ function Top5() {
                                     <Typography
                                         variant="body2"
                                         sx={{
-                                            fontSize: '0.95rem',
+                                            fontSize: '1.5rem',
                                             fontWeight: 'bold',
                                             textAlign: 'center',
                                             color: isDarkMode ? 'rgba(255, 255, 255, 0.9)' : 'rgba(0, 0, 0, 0.8)',
@@ -352,7 +371,7 @@ function Top5() {
                                     
                                     <Typography
                                         sx={{
-                                            fontSize: '0.85rem',
+                                            fontSize: '1.5rem',
                                             fontWeight: 'bold',
                                             color: '#d32f2f',
                                             textAlign: 'center'
@@ -364,12 +383,12 @@ function Top5() {
                             </Paper>
                         </div>
                     </Fade>
-                )}
+                )*/}
                 </Box>
             </Container>
 
             {/* Other Teams Section - Optimized for 60 teams */}
-            {remainingTeams.length > 0 && revealedCount === 6 && (
+            {remainingTeams.length > 0 && revealedCount > top5Teams.length && (
                 <Box
                     sx={{
                         width: '100%',
@@ -395,7 +414,7 @@ function Top5() {
                     <Box
                         sx={{
                             display: 'grid',
-                            gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
+                            gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))',
                             gap: 1,
                             overflowY: 'auto',
                             overflowX: 'hidden',
@@ -440,7 +459,7 @@ function Top5() {
                                             sx={{
                                                 fontWeight: 'bold',
                                                 color: isDarkMode ? 'rgba(137, 189, 249, 0.69)' : 'rgba(21, 24, 85, 0.68)',
-                                                fontSize: '0.75rem',
+                                                fontSize: '1rem',
                                                 textAlign: 'center'
                                             }}
                                         >
@@ -452,7 +471,7 @@ function Top5() {
                                             variant="body2"
                                             sx={{
                                                 color: isDarkMode ? 'rgba(255, 255, 255, 0.87)' : 'rgba(0, 0, 0, 0.87)',
-                                                fontSize: '1rem',
+                                                fontSize: '1.5rem',
                                                 fontWeight: 'bold',
                                                 textAlign: 'center',
                                                 overflow: 'hidden',
@@ -477,7 +496,7 @@ function Top5() {
                                                 sx={{
                                                     fontWeight: 'bold',
                                                     color: isDarkMode ? '#90caf9' : '#1976d2',
-                                                    fontSize: '0.75rem'
+                                                    fontSize: '1.5rem'
                                                 }}
                                             >
                                                 #{team.teamQuiz.nr}
@@ -487,7 +506,7 @@ function Top5() {
                                                 sx={{
                                                     fontWeight: 'bold',
                                                     color: isDarkMode ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)',
-                                                    fontSize: '0.75rem'
+                                                    fontSize: '1.5rem'
                                                 }}
                                             >
                                                 {Math.round(team.total)} pts
