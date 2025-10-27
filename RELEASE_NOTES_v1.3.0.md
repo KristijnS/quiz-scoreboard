@@ -1,78 +1,218 @@
-# Release Notes — v1.3.0
+# Release Notes - v1.3.0
 
-Release date: 2025-10-27
+**Release Date:** October 27, 2025
 
-Summary
--------
-This release introduces the long-requested Ex Aequo (tiebreaker) feature and several UX, data-refresh and ranking improvements. Electron/macOS binaries were produced for v1.3.0 and are available in `electron/dist/` on the build machine (not committed into git by default).
+## 🎯 Overview
 
-Highlights
-----------
-- Feature: Ex Aequo tiebreaker
-  - A dedicated Ex Aequo round can be enabled per quiz. It does not count toward teams' total scores.
-  - When enabled, the quiz stores a target value (Ex Aequo value). If teams are tied on total score, the team whose Ex Aequo answer is closest to that target wins the tie.
-  - Backend: `Quiz` entity now has `exAequoEnabled: boolean` and `exAequoValue?: number`. `Round` entity has `isExAequo: boolean` to flag the special round.
-  - Frontend: UI to enable/disable Ex Aequo in `QuizManagement`, plus a Balance icon and numeric target field when enabled.
+Version 1.3.0 introduces a comprehensive **Ex Aequo (Tiebreaker)** system for handling ties in quiz competitions. This feature allows quiz masters to add a special tiebreaker question that only affects ranking when teams have equal total scores, with the team whose answer is closest to the target value placing highest.
 
-- UX: Ex Aequo round locked as last round
-  - The Ex Aequo round is always displayed last and cannot be reordered.
-  - Creation of new rounds inserts them before the Ex Aequo round.
-  - The Ex Aequo round cannot be edited (name or max score) via the round edit pencil; it can only be removed by toggling the Ex Aequo checkbox in quiz settings.
+---
 
-- Ranking and scoring
-  - All ranking views (Scoreboard, Leaderboard, Top5, ChartView) exclude the Ex Aequo round from total calculations.
-  - Tiebreaker logic implemented: if `quiz.exAequoEnabled` and `quiz.exAequoValue` are set, tied teams are ordered by the smallest absolute difference between their Ex Aequo answer and the target value.
+## ✨ New Features
 
-- Data refresh and stability
-  - Improved data refresh on navigation: score data refreshes when navigating to the scoreboard/leaderboard pages to avoid requiring a manual browser reload.
-  - Fixed edge cases for fewer than 5 teams in Top5/Leaderboard (dynamic sizing and reveal logic).
+### Ex Aequo Tiebreaker System
 
-- Styling and minor UI fixes
-  - Leaderboard button styling adjusted to match other navigation buttons.
-  - Icon: Ex Aequo setting uses a balance/tie icon for clarity.
+A complete tiebreaker mechanism for handling tied scores:
 
-Build & Artifacts
------------------
-- The repo package versions have been bumped to `1.3.0` for root, backend, frontend and electron packages.
-- Electron/macOS artifacts were produced by the `build:electron:mac` task and can be found locally at:
+#### Quiz Setup
+- **Ex Aequo Toggle**: New checkbox in Quiz Management to enable/disable the Ex Aequo round
+- **Target Value**: Configurable numeric target value that teams try to guess
+- **Visual Indicator**: Balance scale icon (⚖️) clearly marks the Ex Aequo setting
+- **Automatic Round Creation**: Enabling Ex Aequo automatically creates a special round with unlimited score capacity (999999 points)
 
-  - `electron/dist/Quiz Scoreboard-1.3.0-arm64.dmg`
-  - `electron/dist/Quiz Scoreboard-1.3.0-arm64-mac.zip`
+#### Round Management
+- **Locked Position**: Ex Aequo round is always positioned last and cannot be moved
+- **Protected from Editing**: Ex Aequo round name and max score cannot be modified
+- **Smart Insertion**: New rounds automatically insert before the Ex Aequo round
+- **Disabled Controls**: Edit and arrow buttons are disabled for Ex Aequo rounds to prevent accidental modifications
 
-  (Note: the `electron/dist/` folder is ignored by git via `.gitignore` and therefore not committed into the repository. Upload these files to a GitHub Release or artifact store instead of committing large binaries.)
+#### Ranking Logic
+- **Excluded from Totals**: Ex Aequo scores do not count toward team total scores
+- **Tiebreaker Only**: Ex Aequo values are only used when teams have identical total scores
+- **Closest Wins**: When tied, the team with the answer closest to the target value ranks higher
+- **Mathematical Precision**: Uses `Math.abs(teamAnswer - targetValue)` to determine proximity
 
-Upgrade notes
--------------
-- Database: The new `Round.isExAequo` and `Quiz.exAequo*` fields are nullable/defaulted; if your backend uses TypeORM synchronize=true the fields will be created automatically on startup. If you manage schema migrations manually, add equivalent migration scripts.
+#### UI Integration
+- **Scoreboard**: Displays rankings with Ex Aequo tiebreaking applied
+- **Leaderboard**: Animated reveal respects tiebreaker order
+- **Top 5 View**: Progressive reveal honors tiebreaker rankings
+- **Chart View**: Visual rankings reflect tiebreaker logic
 
-- Frontend: No config changes expected. If you use caching proxies, clear browser cache after updating to see UI changes.
+---
 
-How to reproduce locally
-------------------------
-1. Pull the `main` branch at the v1.3.0 tag:
+## 🔧 Technical Improvements
 
-   git fetch --tags && git checkout v1.3.0
+### Backend Changes
+- **Quiz Entity**: Added `exAequoEnabled` (boolean) and `exAequoValue` (float) fields
+- **Round Entity**: Added `isExAequo` (boolean) flag to identify the special tiebreaker round
+- **API Routes**: Updated quiz and round endpoints to support Ex Aequo data
+- **Database Schema**: Automatic migration support via TypeORM
 
-2. Build the app and Electron mac artifact (mac machine required):
+### Frontend Changes
+- **Type Definitions**: Extended Quiz and Round interfaces with Ex Aequo properties
+- **State Management**: Quiz context automatically refreshes on page navigation
+- **API Integration**: Updated service layer to handle Ex Aequo settings
+- **Sorting Logic**: Implemented two-tier sorting (total score → tiebreaker proximity)
 
-   npm run install:all
-   npm run build:electron:mac
+### UI/UX Enhancements
+- **Consistent Icons**: Used Material-UI BalanceIcon for tiebreaker identification
+- **Disabled States**: Visual feedback for non-editable Ex Aequo controls
+- **Edge Case Handling**: Proper behavior with fewer than 5 teams
+- **Button Styling**: Consistent color scheme across all navigation buttons
 
-3. Built artifacts will be available in `electron/dist/`.
+---
 
-Notes and follow-ups
---------------------
-- I did not force-add the generated binaries to git (the `electron/dist` path is ignored by `.gitignore`). Recommended distribution path: create a GitHub Release for tag `v1.3.0` and upload the DMG/ZIP there.
-- Suggested follow-up: add a small CI workflow to produce and publish the Electron artifacts automatically (recommended: GitHub Actions + upload to releases or S3).
+## 🐛 Bug Fixes
 
-Changelog (technical)
----------------------
-- backend: add `exAequoEnabled`, `exAequoValue` to `Quiz` entity; add `isExAequo` to `Round` entity; update quiz/round routes to accept new fields.
-- frontend: add Ex Aequo UI to `QuizManagement`, update ranking logic in `Scoreboard`, `Leaderboard`, `Top5`, `ChartView` to exclude Ex Aequo and apply tiebreakers; disable editing/moving of Ex Aequo round in UI.
-- other: bump package versions to 1.3.0; built Electron/mac artifacts.
+### Data Refresh Issues
+- **Fixed**: Scoreboard not refreshing after adding scores
+- **Solution**: Added automatic refresh on page navigation via `location.pathname` effect
 
-Acknowledgements
-----------------
-Thanks for the detailed feedback during the Ex Aequo feature implementation — it helped catch edge cases (refreshing data, top5 reveal behavior, and UI feedback while locking the Ex Aequo round).
+### Edge Case - Small Team Count
+- **Fixed**: Leaderboard and Top 5 pages breaking with fewer than 5 teams
+- **Solution**: Dynamic team count handling with `Math.min(5, allTeamsSorted.length)`
 
-— The Build Bot
+### UI Consistency
+- **Fixed**: Leaderboard button appearing white in dark mode
+- **Solution**: Added proper color, variant, and disabled props
+
+---
+
+## 📦 Files Changed
+
+### Backend
+- `backend/src/entities/Quiz.ts` - Added Ex Aequo fields
+- `backend/src/entities/Round.ts` - Added isExAequo flag
+- `backend/src/routes/quiz.routes.ts` - Ex Aequo API support
+- `backend/src/routes/round.routes.ts` - Round creation with Ex Aequo
+
+### Frontend
+- `frontend/src/types.ts` - Extended type definitions
+- `frontend/src/services/api.ts` - API integration
+- `frontend/src/context/QuizContext.tsx` - Navigation-based refresh
+- `frontend/src/pages/QuizManagement.tsx` - Complete Ex Aequo UI and logic
+- `frontend/src/pages/Scoreboard.tsx` - Ranking with tiebreaker
+- `frontend/src/pages/Leaderboard.tsx` - Animated reveal with tiebreaker
+- `frontend/src/pages/Top5.tsx` - Progressive reveal with tiebreaker
+- `frontend/src/pages/ChartView.tsx` - Chart rankings with tiebreaker
+- `frontend/src/App.tsx` - Button styling fixes
+
+---
+
+## 🎮 Usage Guide
+
+### Setting Up Ex Aequo
+
+1. **Navigate to Quiz Management**
+2. **Enable Ex Aequo**: Check the ⚖️ Ex Aequo checkbox
+3. **Set Target Value**: Enter the numeric target value (e.g., "365" for days in a year)
+4. **Add Rounds**: Create regular quiz rounds - they will automatically appear before Ex Aequo
+5. **Enter Scores**: Add scores for both regular rounds and the Ex Aequo round
+
+### How Tiebreaking Works
+
+**Scenario**: Team A and Team B both have 100 points total
+- **Target Value**: 365
+- **Team A's Ex Aequo Answer**: 350 (difference: 15)
+- **Team B's Ex Aequo Answer**: 380 (difference: 15)
+- **Result**: Teams remain tied (same difference)
+
+**Scenario**: Team A and Team B both have 100 points total
+- **Target Value**: 365
+- **Team A's Ex Aequo Answer**: 370 (difference: 5)
+- **Team B's Ex Aequo Answer**: 350 (difference: 15)
+- **Result**: Team A ranks higher (smaller difference wins)
+
+---
+
+## 🚀 Upgrade Instructions
+
+### From v1.2.0 to v1.3.0
+
+1. **Pull Latest Code**:
+   ```bash
+   git pull origin main
+   git checkout v1.3.0
+   ```
+
+2. **Install Dependencies**:
+   ```bash
+   npm install
+   cd backend && npm install
+   cd ../frontend && npm install
+   cd ../electron && npm install
+   cd ..
+   ```
+
+3. **Database Migration** (Automatic):
+   - TypeORM will automatically add new columns when the backend starts
+   - No manual migration required if `synchronize: true` is enabled
+
+4. **Build and Run**:
+   ```bash
+   npm run build
+   npm run dev
+   ```
+
+5. **Existing Quizzes**:
+   - All existing quizzes will have `exAequoEnabled: false` by default
+   - No changes to existing quiz behavior
+   - Enable Ex Aequo per quiz as needed
+
+---
+
+## 📥 Download
+
+### macOS (Apple Silicon - M1/M2/M3)
+- **DMG Installer**: `Quiz Scoreboard-1.3.0-arm64.dmg` (95.4 MB)
+- **ZIP Archive**: `Quiz Scoreboard-1.3.0-arm64-mac.zip` (92.2 MB)
+
+### Installation
+1. Download the DMG or ZIP file
+2. For DMG: Open and drag to Applications folder
+3. For ZIP: Extract and move to Applications folder
+4. First launch: Right-click → Open (to bypass Gatekeeper)
+
+---
+
+## 🔮 What's Next
+
+### Planned for v1.4.0
+- Windows and Linux binary builds
+- Multiple Ex Aequo rounds support
+- Custom tiebreaker rules (percentage-based, time-based)
+- Export quiz results with tiebreaker details
+
+---
+
+## 🙏 Acknowledgments
+
+Thank you to all users who requested the tiebreaker feature and provided feedback during development!
+
+---
+
+## 📝 Full Changelog
+
+```
+feat: Add Ex Aequo tiebreaker system
+  - Quiz Management: Ex Aequo checkbox and target value input
+  - Round Management: Locked last position for Ex Aequo round
+  - Ranking Logic: Two-tier sorting with tiebreaker
+  - UI Integration: All views updated with tiebreaker support
+
+fix: Data refresh on page navigation
+  - Added location.pathname-based refresh in QuizContext
+
+fix: Edge cases with fewer than 5 teams
+  - Dynamic team count handling in Leaderboard and Top 5
+
+fix: Button styling consistency
+  - Leaderboard button color in dark mode
+
+chore: Version bump to 1.3.0
+  - Updated package.json in root, backend, frontend, electron
+```
+
+---
+
+**For questions or issues, please visit**: https://github.com/KristijnS/quiz-scoreboard/issues
