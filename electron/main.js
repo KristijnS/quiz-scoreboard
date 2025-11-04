@@ -80,7 +80,10 @@ function startBackendServer() {
     } else {
         // In production, run the compiled JavaScript backend from Resources
         const backendPath = path.join(process.resourcesPath, 'backend/dist/index.js');
+        const backendDir = path.join(process.resourcesPath, 'backend');
+        
         backendProcess = spawn('node', [backendPath], {
+            cwd: backendDir, // Set working directory to backend folder
             stdio: 'inherit',
             env: {
                 ...process.env,

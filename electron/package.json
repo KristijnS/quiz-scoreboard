@@ -35,6 +35,15 @@
         "filter": ["**/*"]
       },
       {
+        "from": "../backend/node_modules",
+        "to": "backend/node_modules",
+        "filter": ["**/*"]
+      },
+      {
+        "from": "../backend/package.json",
+        "to": "backend/package.json"
+      },
+      {
         "from": "../frontend/dist",
         "to": "frontend/dist",
         "filter": ["**/*"]
