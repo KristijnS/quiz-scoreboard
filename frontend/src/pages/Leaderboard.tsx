@@ -63,8 +63,10 @@ function Leaderboard() {
                 
                 // Check each round from last to first
                 for (const round of normalRounds) {
-                    const scoreA = round.scores.find(s => s.teamQuiz.id === a.teamQuiz.id)?.points ?? 0;
-                    const scoreB = round.scores.find(s => s.teamQuiz.id === b.teamQuiz.id)?.points ?? 0;
+                    if (!round.scores || round.scores.length === 0) continue;
+                    
+                    const scoreA = round.scores.find(s => s.teamQuiz?.id === a.teamQuiz.id)?.points ?? 0;
+                    const scoreB = round.scores.find(s => s.teamQuiz?.id === b.teamQuiz.id)?.points ?? 0;
                     
                     if (scoreA !== scoreB) {
                         return scoreB - scoreA; // Higher score wins
