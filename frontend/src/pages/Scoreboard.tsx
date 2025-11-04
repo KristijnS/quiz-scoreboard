@@ -95,7 +95,7 @@ function Scoreboard() {
                     const scoreB = round.scores.find(s => s.teamQuiz?.id === b.id)?.points ?? 0;
                     
                     if (scoreA !== scoreB) {
-                        return scoreB - scoreA; // Higher score wins
+                        return scoreB - scoreA; // Higher score wins: scoreB > scoreA → positive → b before a
                     }
                 }
             }
