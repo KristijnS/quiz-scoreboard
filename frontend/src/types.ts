@@ -7,6 +7,7 @@ export interface Quiz {
     gradientEnabled: boolean;
     exAequoEnabled: boolean;
     exAequoValue?: number;
+    lastRoundTiebreakerEnabled: boolean;
     rounds: Round[];
     teamQuizzes: TeamQuiz[];
 }

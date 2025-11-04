@@ -116,6 +116,9 @@ router.put('/:id', async (req, res) => {
                 quiz.exAequoValue = undefined;
             }
         }
+        if (req.body.lastRoundTiebreakerEnabled !== undefined) {
+            quiz.lastRoundTiebreakerEnabled = !!req.body.lastRoundTiebreakerEnabled;
+        }
         
         await quizRepository.save(quiz);
         return res.json(quiz);

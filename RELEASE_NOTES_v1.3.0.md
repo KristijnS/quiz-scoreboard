@@ -214,18 +214,6 @@ A complete tiebreaker mechanism for handling tied scores:
 
 ---
 
-## 🔮 What's Next
-
-### Planned for v1.4.0
-- Windows and Linux binary builds
-- Multiple Ex Aequo rounds support
-- Custom tiebreaker rules (percentage-based, time-based)
-- Export quiz results with tiebreaker details
-- Leaderboard customization options (animation speed, reveal order)
-- Full-screen presentation mode
-
----
-
 ## 🙏 Acknowledgments
 
 Thank you to all users who requested the tiebreaker feature and provided feedback during development!

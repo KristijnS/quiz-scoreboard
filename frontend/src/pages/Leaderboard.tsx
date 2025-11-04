@@ -43,15 +43,33 @@ function Leaderboard() {
             return { teamQuiz, total, exAequoScore };
         });
         
-        // Sort by total score, then by Ex Aequo tiebreaker if enabled
+        // Sort by total score, then by tiebreakers if enabled
         return teamTotals.sort((a, b) => {
             if (a.total !== b.total) return b.total - a.total;
             
-            // Tiebreaker: closest to Ex Aequo target value wins
+            // Tiebreaker 1: closest to Ex Aequo target value wins
             if (quiz.exAequoEnabled && quiz.exAequoValue !== undefined) {
                 const aDiff = Math.abs(a.exAequoScore - quiz.exAequoValue);
                 const bDiff = Math.abs(b.exAequoScore - quiz.exAequoValue);
                 return aDiff - bDiff;
+            }
+            
+            // Tiebreaker 2: Last round highest score
+            if (quiz.lastRoundTiebreakerEnabled) {
+                // Get normal rounds (not Ex Aequo) sorted by round number descending
+                const normalRounds = quiz.rounds
+                    .filter(r => r.isExAequo !== true)
+                    .sort((r1, r2) => r2.nr - r1.nr);
+                
+                // Check each round from last to first
+                for (const round of normalRounds) {
+                    const scoreA = round.scores.find(s => s.teamQuiz.id === a.teamQuiz.id)?.points ?? 0;
+                    const scoreB = round.scores.find(s => s.teamQuiz.id === b.teamQuiz.id)?.points ?? 0;
+                    
+                    if (scoreA !== scoreB) {
+                        return scoreB - scoreA; // Higher score wins
+                    }
+                }
             }
             
             return 0;

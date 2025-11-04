@@ -61,7 +61,7 @@ function Scoreboard() {
         return map;
     }, [quiz]);
 
-    // Pre-calculate all ranks once (with Ex Aequo tiebreaking)
+    // Pre-calculate all ranks once (with tiebreaking)
     const teamRanksMap = useMemo(() => {
         if (!quiz) return new Map<number, number>();
         
@@ -71,13 +71,31 @@ function Scoreboard() {
             
             if (totalA !== totalB) return totalB - totalA;
             
-            // Tiebreaker: Ex Aequo closest to target
+            // Tiebreaker 1: Ex Aequo closest to target
             if (quiz.exAequoEnabled && quiz.exAequoValue !== undefined) {
                 const exAequoA = teamExAequoMap.get(a.id) ?? 0;
                 const exAequoB = teamExAequoMap.get(b.id) ?? 0;
                 const diffA = Math.abs(exAequoA - quiz.exAequoValue);
                 const diffB = Math.abs(exAequoB - quiz.exAequoValue);
                 return diffA - diffB;
+            }
+            
+            // Tiebreaker 2: Last round highest score
+            if (quiz.lastRoundTiebreakerEnabled) {
+                // Get normal rounds (not Ex Aequo) sorted by round number descending
+                const normalRounds = quiz.rounds
+                    .filter(r => r.isExAequo !== true)
+                    .sort((r1, r2) => r2.nr - r1.nr);
+                
+                // Check each round from last to first
+                for (const round of normalRounds) {
+                    const scoreA = round.scores.find(s => s.teamQuiz.id === a.id)?.points ?? 0;
+                    const scoreB = round.scores.find(s => s.teamQuiz.id === b.id)?.points ?? 0;
+                    
+                    if (scoreA !== scoreB) {
+                        return scoreB - scoreA; // Higher score wins
+                    }
+                }
             }
             
             return 0;

@@ -23,7 +23,7 @@ import {
     DialogActions,
     Button
 } from '@mui/material';
-import { Add as AddIcon, Delete as DeleteIcon, ArrowUpward, ArrowDownward, Edit as EditIcon, Check as CheckIcon, Close as CloseIcon, Gradient as GradientIcon, Transform as TransformIcon, Balance as BalanceIcon } from '@mui/icons-material';
+import { Add as AddIcon, Delete as DeleteIcon, ArrowUpward, ArrowDownward, Edit as EditIcon, Check as CheckIcon, Close as CloseIcon, Gradient as GradientIcon, Transform as TransformIcon, Balance as BalanceIcon, EmojiEvents as TrophyIcon } from '@mui/icons-material';
 import { CreateRoundData } from '../types';
 import { quizApi, teamApi, roundApi } from '../services/api';
 import { useQuiz } from '../context/QuizContext';
@@ -68,6 +68,9 @@ function QuizManagement() {
     const [exAequoEnabled, setExAequoEnabled] = useState(false);
     const [exAequoValue, setExAequoValue] = useState('');
 
+    // Last Round tiebreaker state
+    const [lastRoundTiebreakerEnabled, setLastRoundTiebreakerEnabled] = useState(false);
+
     // Delete confirmation state
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [itemToDelete, setItemToDelete] = useState<{ type: 'team' | 'round'; id: number; name: string; hasDependencies: boolean; dependencyCount?: number } | null>(null);
@@ -80,6 +83,7 @@ function QuizManagement() {
         setGradientEnabled(quiz.gradientEnabled !== undefined ? quiz.gradientEnabled : true);
         setExAequoEnabled(quiz.exAequoEnabled || false);
         setExAequoValue(quiz.exAequoValue?.toString() || '');
+        setLastRoundTiebreakerEnabled(quiz.lastRoundTiebreakerEnabled || false);
     }, [quiz]);
 
     // Replace loadQuiz with refreshQuiz from context
@@ -402,6 +406,12 @@ function QuizManagement() {
         setExAequoEnabled(enabled);
         
         try {
+            // If enabling Ex Aequo, disable last round tiebreaker
+            if (enabled && lastRoundTiebreakerEnabled) {
+                setLastRoundTiebreakerEnabled(false);
+                await quizApi.update(id, { lastRoundTiebreakerEnabled: false });
+            }
+            
             // Update quiz with new exAequoEnabled value
             await quizApi.update(id, { exAequoEnabled: enabled });
             
@@ -430,7 +440,7 @@ function QuizManagement() {
         } catch (error) {
             console.error('Error handling Ex Aequo change:', error);
         }
-    }, [id, quiz, loadQuiz]);
+    }, [id, quiz, loadQuiz, lastRoundTiebreakerEnabled]);
 
     const handleExAequoValueChange = useCallback(async (value: string) => {
         if (!id) return;
@@ -442,6 +452,24 @@ function QuizManagement() {
             loadQuiz();
         }
     }, [id, loadQuiz]);
+
+    const handleLastRoundTiebreakerEnabledChange = useCallback(async (enabled: boolean) => {
+        if (!id) return;
+        setLastRoundTiebreakerEnabled(enabled);
+        
+        try {
+            // If enabling last round tiebreaker, disable Ex Aequo
+            if (enabled && exAequoEnabled) {
+                await handleExAequoEnabledChange(false);
+            }
+            
+            // Update quiz with new lastRoundTiebreakerEnabled value
+            await quizApi.update(id, { lastRoundTiebreakerEnabled: enabled });
+            await loadQuiz();
+        } catch (error) {
+            console.error('Error handling Last Round Tiebreaker change:', error);
+        }
+    }, [id, exAequoEnabled, handleExAequoEnabledChange, loadQuiz]);
 
     const handleCloseDialog = useCallback(() => {
         setDeleteDialogOpen(false);
@@ -531,6 +559,15 @@ function QuizManagement() {
                                     sx={{ width: 150 }}
                                 />
                             )}
+                        </Box>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Tooltip title="Use last round scores to break ties. Team with highest score in the last round wins. If still tied, use second-to-last round, etc.">
+                                <TrophyIcon sx={{ fontSize: 20, cursor: 'help' }} />
+                            </Tooltip>
+                            <Checkbox
+                                checked={lastRoundTiebreakerEnabled}
+                                onChange={(e) => handleLastRoundTiebreakerEnabledChange(e.target.checked)}
+                            />
                         </Box>
                     </Box>
                 </Paper>

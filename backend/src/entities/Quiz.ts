@@ -93,6 +93,19 @@ export class Quiz {
     exAequoValue?: number;
 
     /**
+     * Last Round Tiebreaker Feature
+     * 
+     * When enabled, teams with equal total scores are ranked by:
+     * 1. Highest score in the last round
+     * 2. If still tied, highest score in second-to-last round, etc.
+     * 
+     * Mutually exclusive with exAequoEnabled
+     * Default: false (disabled)
+     */
+    @Column({ default: false })
+    lastRoundTiebreakerEnabled!: boolean;
+
+    /**
      * Quiz creation timestamp
      * Automatically set by TypeORM when quiz is created
      * Used for: Sorting quizzes by date, displaying quiz history
