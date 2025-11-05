@@ -15,7 +15,7 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd "$SCRIPT_DIR"
 
 # Step 1: Build Backend
-echo "Step 1/3: Building backend..."
+echo "Step 1/4: Building backend..."
 cd backend
 npm run build
 echo "✓ Backend built successfully"
@@ -28,9 +28,15 @@ npm run build
 echo "✓ Frontend built successfully"
 echo ""
 
-# Step 3: Build Electron Apps (Mac and Windows)
-echo "Step 3/3: Building Electron apps (Mac and Windows)..."
+# Step 3: Generate Icons
+echo "Step 3/4: Generating application icons..."
 cd ../electron
+sh ./generate-icons.sh
+echo "✓ Icons generated successfully"
+echo ""
+
+# Step 4: Build Electron Apps (Mac and Windows)
+echo "Step 4/4: Building Electron apps (Mac and Windows)..."
 npm run build:all
 echo "✓ Electron apps built successfully"
 echo ""
