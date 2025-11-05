@@ -89,10 +89,9 @@ function Scoreboard() {
                 
                 // Check each round from last to first
                 for (const round of normalRounds) {
-                    if (!round.scores || round.scores.length === 0) continue;
-                    
-                    const scoreA = round.scores.find(s => s.teamQuiz?.id === a.id)?.points ?? 0;
-                    const scoreB = round.scores.find(s => s.teamQuiz?.id === b.id)?.points ?? 0;
+                    // Find scores from TeamQuiz objects (not from Round.scores which isn't populated)
+                    const scoreA = a.scores.find(s => s.round.id === round.id)?.points ?? 0;
+                    const scoreB = b.scores.find(s => s.round.id === round.id)?.points ?? 0;
                     
                     if (scoreA !== scoreB) {
                         return scoreB - scoreA; // Higher score wins: scoreB > scoreA → positive → b before a
@@ -222,9 +221,40 @@ function Scoreboard() {
 
             const aNum = typeof aValue === 'number' ? aValue : 0;
             const bNum = typeof bValue === 'number' ? bValue : 0;
+            
+            // Apply tiebreaker rules when sorting by 'total' or 'rank' and values are equal
+            if ((sortColumn === 'total' || sortColumn === 'rank') && aNum === bNum) {
+                // Tiebreaker 1: Ex Aequo closest to target
+                if (quiz.exAequoEnabled && quiz.exAequoValue !== undefined) {
+                    const exAequoA = teamExAequoMap.get(a.id) ?? 0;
+                    const exAequoB = teamExAequoMap.get(b.id) ?? 0;
+                    const diffA = Math.abs(exAequoA - quiz.exAequoValue);
+                    const diffB = Math.abs(exAequoB - quiz.exAequoValue);
+                    if (diffA !== diffB) {
+                        return sortDirection === 'asc' ? diffA - diffB : diffB - diffA;
+                    }
+                }
+                
+                // Tiebreaker 2: Last round highest score
+                if (quiz.lastRoundTiebreakerEnabled) {
+                    const normalRounds = quiz.rounds
+                        .filter(r => r.isExAequo !== true)
+                        .sort((r1, r2) => r2.nr - r1.nr);
+                    
+                    for (const round of normalRounds) {
+                        const scoreA = a.scores.find(s => s.round.id === round.id)?.points ?? 0;
+                        const scoreB = b.scores.find(s => s.round.id === round.id)?.points ?? 0;
+                        
+                        if (scoreA !== scoreB) {
+                            return sortDirection === 'asc' ? scoreA - scoreB : scoreB - scoreA;
+                        }
+                    }
+                }
+            }
+            
             return sortDirection === 'asc' ? aNum - bNum : bNum - aNum;
         });
-    }, [quiz, sortColumn, sortDirection, teamRanksMap, teamTotalsMap, teamScoresMap]);
+    }, [quiz, sortColumn, sortDirection, teamRanksMap, teamTotalsMap, teamScoresMap, teamExAequoMap]);
 
     if (!quiz) return null;
 

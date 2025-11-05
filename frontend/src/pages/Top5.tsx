@@ -61,10 +61,9 @@ function Top5() {
                 
                 // Check each round from last to first
                 for (const round of normalRounds) {
-                    if (!round.scores || round.scores.length === 0) continue;
-                    
-                    const scoreA = round.scores.find(s => s.teamQuiz?.id === a.teamQuiz.id)?.points ?? 0;
-                    const scoreB = round.scores.find(s => s.teamQuiz?.id === b.teamQuiz.id)?.points ?? 0;
+                    // Find scores from TeamQuiz objects
+                    const scoreA = a.teamQuiz.scores.find(s => s.round.id === round.id)?.points ?? 0;
+                    const scoreB = b.teamQuiz.scores.find(s => s.round.id === round.id)?.points ?? 0;
                     
                     if (scoreA !== scoreB) {
                         return scoreB - scoreA; // Higher score wins
