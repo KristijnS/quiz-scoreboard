@@ -82,13 +82,34 @@ function startBackendServer() {
         const backendPath = path.join(process.resourcesPath, 'backend/dist/index.js');
         const backendDir = path.join(process.resourcesPath, 'backend');
         
+        console.log('Starting backend in production mode');
+        console.log('Backend path:', backendPath);
+        console.log('Backend dir:', backendDir);
+        console.log('Resources path:', process.resourcesPath);
+        
+        // Check if backend file exists
+        const fs = require('fs');
+        if (!fs.existsSync(backendPath)) {
+            console.error('Backend file not found at:', backendPath);
+            console.error('Directory contents:', fs.readdirSync(path.join(process.resourcesPath, 'backend')));
+        }
+        
         backendProcess = spawn('node', [backendPath], {
             cwd: backendDir, // Set working directory to backend folder
-            stdio: 'inherit',
+            stdio: ['ignore', 'pipe', 'pipe'], // Capture stdout and stderr
             env: {
                 ...process.env,
                 NODE_ENV: 'production'
             }
+        });
+        
+        // Log backend output
+        backendProcess.stdout.on('data', (data) => {
+            console.log('[Backend]:', data.toString());
+        });
+        
+        backendProcess.stderr.on('data', (data) => {
+            console.error('[Backend Error]:', data.toString());
         });
     }
 
